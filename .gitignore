@@ -1,0 +1,9 @@
+# Node dingen
+/node_modules
+package-lock.json
+
+# Bestand voor onze secrets
+.env    
+
+# Voor als er een backup is gemaakt doe ik steeds als zip
+*.zip

@@ -1,0 +1,154 @@
+* {
+    margin: 0%;
+    padding: 0%;
+    box-sizing: border-box;
+
+}
+
+body {
+    background-color: #096e00;
+    color: white;
+}
+
+header {
+    height: 10vh;
+    background-color: #FFFFFF;
+    color: #000000;
+    padding: 5px;
+}
+
+header a {
+    text-decoration: none;
+    color: inherit;
+}
+
+main {
+    height: 85vh;
+}
+
+.time-control {
+  background-color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #000000;
+}
+
+.time-control-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.time-control-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.time-control button {
+  border: none;
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #096e00;
+  color: #ffffff;
+}
+
+.time-control button:hover {
+  filter: brightness(1.1);
+}
+
+.time-control input[type="range"] {
+  width: 220px;
+}
+
+.time-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.time-label-main {
+  font-weight: 700;
+  text-align: center;
+  flex: 1;
+}
+
+.time-label-edge {
+  font-weight: 400;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.time-control {
+  background-color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #000000;
+}
+
+.time-control-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.time-control-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.time-control button {
+  border: none;
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #096e00;
+  color: #ffffff;
+}
+
+.time-control button:hover {
+  filter: brightness(1.1);
+}
+
+.time-control input[type="range"] {
+  width: 220px;
+}
+
+.time-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.time-label-main {
+  font-weight: 700;
+  text-align: center;
+  flex: 1;
+}
+
+.time-label-edge {
+  font-weight: 400;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+footer {
+    height: 5vh;
+    background-color: #FFFFFF;
+    color: #000000;
+    padding: 5px;
+}

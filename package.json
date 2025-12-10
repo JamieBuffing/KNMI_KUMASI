@@ -1,0 +1,25 @@
+{
+  "name": "knmi_kumasi",
+  "version": "0.0.1",
+  "description": "Schoolproject voor knmi",
+  "homepage": "https://github.com/JamieBuffing/KNMI_Kumasi#readme",
+  "bugs": {
+    "url": "https://github.com/JamieBuffing/KNMI_Kumasi/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JamieBuffing/KNMI_Kumasi.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^5.2.1",
+    "leaflet": "^1.9.4"
+  }
+}
