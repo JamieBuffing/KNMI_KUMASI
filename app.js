@@ -16,9 +16,14 @@ app.use('/leafletcss', express.static(path.join(__dirname, 'public/css/leaflet')
 app.use('/leafletjs', express.static(path.join(__dirname, 'public/js/leaflet')));
 
 app.get('/', toonIndex);
+app.get('/login', toonLogin);
 
 function toonIndex (req, res) {
     res.render("pages/index");
+}
+
+function toonLogin (req, res) {
+    res.render("pages/login");
 }
 
 app.get('/api/keuzes', (req, res) => {

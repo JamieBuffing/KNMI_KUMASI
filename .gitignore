@@ -7,3 +7,6 @@ package-lock.json
 
 # Voor als er een backup is gemaakt doe ik steeds als zip
 *.zip
+
+# Voor de hosting via vercel
+.vercel
