@@ -196,17 +196,50 @@ app.post("/loginform", loginLimiter, async (req, res, next) => {
   }
 });
 
+// app.post("/loginVerification", verifyCodeLimiter, (req, res) => {
+//   const { code } = req.body;
+//   const email = req.session.pendingEmail;
+
+//   if (!email) {
+//     return res.redirect("/login");
+//   }
+
+//   const data = loginCodes.get(email);
+
+//   if (!data || data.code !== code || Date.now() > data.expiresAt) {
+//     return res.render("pages/loginVerification", {
+//       error: "Ongeldige of verlopen code.",
+//     });
+//   }
+
+//   // Code klopt → inloggen
+//   loginCodes.delete(email);
+//   delete req.session.pendingEmail;
+
+//   req.session.userId = data.userId;
+
+//   res.redirect("/beheer");
+// });
+
 app.post("/loginVerification", verifyCodeLimiter, (req, res) => {
-  const { code } = req.body;
+  const rawCode = req.body.code;
   const email = req.session.pendingEmail;
 
   if (!email) {
+    // Geen email in sessie -> eerst opnieuw inloggen
     return res.redirect("/login");
   }
 
+  // Spaties en enter eruit halen, en altijd als string behandelen
+  const code = String(rawCode || "").trim();
+
   const data = loginCodes.get(email);
 
-  if (!data || data.code !== code || Date.now() > data.expiresAt) {
+  if (
+    !data ||                      // geen code bekend voor dit email
+    data.code !== code ||         // code komt niet overeen
+    Date.now() > data.expiresAt   // code verlopen
+  ) {
     return res.render("pages/loginVerification", {
       error: "Ongeldige of verlopen code.",
     });
