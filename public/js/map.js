@@ -191,7 +191,18 @@ function updateMarkers() {
       return;
     }
 
+    // ⛔ If "no measurement possible" → do not show a marker at all
+    if (measurement.noMeasurement) {
+      return;
+    }
+
     const value = measurement.value;
+
+    // Extra safety: skip invalid values
+    if (typeof value !== "number" || Number.isNaN(value)) {
+      return;
+    }
+
     const color = getColor(value);
 
     const icon = L.divIcon({
@@ -213,9 +224,12 @@ function updateMarkers() {
       .bindPopup(() => {
         const dateStr = new Date(measurement.date).toISOString().slice(0, 10);
 
-        // All measurements in the selected year
+        // All measurements in the selected year (skip "noMeasurement")
         const yearMeasurements = (point.measurements || [])
           .filter(m => {
+            if (!m.date) return false;
+            if (m.noMeasurement) return false;     // ⬅️ skip "no measurement possible"
+            if (typeof m.value !== "number" || Number.isNaN(m.value)) return false;
             const d = new Date(m.date);
             return !Number.isNaN(d.getTime()) && d.getFullYear() === selectedYear;
           })
@@ -227,7 +241,7 @@ function updateMarkers() {
           value < 0.6 ? "Moderate" :
           "High";
 
-        // ----- Mini line chart (SVG) with gradient line, min/max labels, Y mid-tick, X ticks + first/last labels -----
+        // ----- Mini line chart (SVG) -----
         let sparklineSvg = "";
         if (yearMeasurements.length > 1) {
           const vals = yearMeasurements.map(m => m.value);
@@ -238,7 +252,7 @@ function updateMarkers() {
           const h = 55;
           const paddingLeft = 20;
           const paddingBottom = 14;
-          const paddingRight = 10; // extra marge rechts
+          const paddingRight = 10;
 
           const innerW = w - paddingLeft - paddingRight;
           const innerH = h - paddingBottom;
@@ -246,7 +260,6 @@ function updateMarkers() {
           const minLabel = min.toFixed(2);
           const maxLabel = max.toFixed(2);
 
-          // helper om x,y voor een index/waarde te maken
           const coords = (i, v) => {
             const t = (max === min) ? 0.5 : (v - min) / (max - min); // 0–1
             const x = paddingLeft + (yearMeasurements.length === 1
@@ -256,7 +269,6 @@ function updateMarkers() {
             return { x, y };
           };
 
-          // posities + maandlabels
           const positions = yearMeasurements.map((m, i) => {
             const d = new Date(m.date);
             const monthShort = d.toLocaleString("en-US", { month: "short" });
@@ -264,10 +276,8 @@ function updateMarkers() {
             return { x, y, monthShort, value: m.value };
           });
 
-          // polyline-punten
           const pointsAttr = positions.map(p => `${p.x},${p.y}`).join(" ");
 
-          // gradient-stops langs de lijn op basis van value→color
           const stops = positions.map((p, i) => {
             const offset = (positions.length === 1)
               ? 0
@@ -276,12 +286,10 @@ function updateMarkers() {
             return `<stop offset="${offset}%" stop-color="${c}" />`;
           }).join("");
 
-          // X-as ticks (kleine streepjes) op alle maanden
           const xTicks = positions.map(p => `
             <line x1="${p.x}" y1="${innerH}" x2="${p.x}" y2="${innerH + 5}" stroke="#888888" stroke-width="1" />
           `).join("");
 
-          // Labels voor eerste en laatste maand (iets naar binnen)
           const firstPos = positions[0];
           const lastPos = positions[positions.length - 1];
           const firstLabelX = firstPos.x;
@@ -331,7 +339,6 @@ function updateMarkers() {
           sparklineSvg = `<span style="font-size:10px; color:#888;">Not enough data for graph</span>`;
         }
 
-        // ----- Chips with monthly values (colored per value, selected month highlighted) -----
         const chipsHtml =
           yearMeasurements.length
             ? yearMeasurements.map(m => {
@@ -362,11 +369,7 @@ function updateMarkers() {
 
         return `
           <div style="font-family: Arial, sans-serif; font-size: 12px; max-width: 280px;">
-            <h4 style="margin: 0 0 4px; font-size: 14px;">${description}</h4>
-
-            <div style="margin-bottom: 4px; color: #555;">
-              Point <strong>#${point.point_number}</strong>
-            </div>
+            <h4 style="margin: 0 0 4px; font-size: 14px;">${description || "Measurement point"}</h4>
 
             <div style="display: flex; gap: 8px; margin-bottom: 6px;">
               <div style="flex: 1;">
@@ -414,7 +417,6 @@ function updateMarkers() {
       });
   });
 }
-
 
 // ------------ INIT: map + data fetch ------------
 
