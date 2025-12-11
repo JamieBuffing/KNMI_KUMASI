@@ -20,7 +20,6 @@ if (!uri || !dbName) {
 }
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const loginCodes = new Map();
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -166,12 +165,24 @@ app.post("/loginform", loginLimiter, async (req, res, next) => {
     }
 
     const code = generateCode();
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minuten geldig
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minuten geldig
 
-    loginCodes.set(user.email, {
-      code,
-      expiresAt,
+    // Code in de database opslaan
+    const loginCodesCollection = db.collection("LoginCodes");
+
+    // Oude codes voor deze user eventueel opruimen (optioneel, maar netjes)
+    await loginCodesCollection.deleteMany({
+      email: user.email,
+    });
+
+    // Nieuwe code invoegen
+    await loginCodesCollection.insertOne({
+      email: user.email,
+      code,                      // plain text; kan ook gehashed, maar voor nu prima
+      expiresAt,                 // Date object
       userId: user._id.toString(),
+      used: false,
+      createdAt: new Date(),
     });
 
     // Onthoud naar welk e-mailadres we de code stuurden
@@ -196,63 +207,49 @@ app.post("/loginform", loginLimiter, async (req, res, next) => {
   }
 });
 
-// app.post("/loginVerification", verifyCodeLimiter, (req, res) => {
-//   const { code } = req.body;
-//   const email = req.session.pendingEmail;
+app.post("/loginVerification", verifyCodeLimiter, async (req, res, next) => {
+  try {
+    const rawCode = req.body.code;
+    const email = req.session.pendingEmail;
 
-//   if (!email) {
-//     return res.redirect("/login");
-//   }
+    if (!email) {
+      return res.redirect("/login");
+    }
 
-//   const data = loginCodes.get(email);
+    const code = String(rawCode || "").trim();
 
-//   if (!data || data.code !== code || Date.now() > data.expiresAt) {
-//     return res.render("pages/loginVerification", {
-//       error: "Ongeldige of verlopen code.",
-//     });
-//   }
+    const db = await getDb();
+    const loginCodesCollection = db.collection("LoginCodes");
 
-//   // Code klopt → inloggen
-//   loginCodes.delete(email);
-//   delete req.session.pendingEmail;
-
-//   req.session.userId = data.userId;
-
-//   res.redirect("/beheer");
-// });
-
-app.post("/loginVerification", verifyCodeLimiter, (req, res) => {
-  const rawCode = req.body.code;
-  const email = req.session.pendingEmail;
-
-  if (!email) {
-    // Geen email in sessie -> eerst opnieuw inloggen
-    return res.redirect("/login");
-  }
-
-  // Spaties en enter eruit halen, en altijd als string behandelen
-  const code = String(rawCode || "").trim();
-
-  const data = loginCodes.get(email);
-
-  if (
-    !data ||                      // geen code bekend voor dit email
-    data.code !== code ||         // code komt niet overeen
-    Date.now() > data.expiresAt   // code verlopen
-  ) {
-    return res.render("pages/loginVerification", {
-      error: "Ongeldige of verlopen code.",
+    // Zoeken naar een niet-gebruikte code voor dit emailadres
+    const record = await loginCodesCollection.findOne({
+      email,
+      code,
+      used: false,
     });
+
+    if (!record || !record.expiresAt || record.expiresAt < new Date()) {
+      return res.render("pages/loginVerification", {
+        error: "Ongeldige of verlopen code.",
+      });
+    }
+
+    // Markeer code als gebruikt
+    await loginCodesCollection.updateOne(
+      { _id: record._id },
+      { $set: { used: true, usedAt: new Date() } }
+    );
+
+    delete req.session.pendingEmail;
+    req.session.userId = record.userId;
+
+    res.redirect("/beheer");
+  } catch (err) {
+    console.error(err);
+    next(err);
   }
-
-  // Code klopt → inloggen
-  loginCodes.delete(email);
-  delete req.session.pendingEmail;
-
-  req.session.userId = data.userId;
-
-  res.redirect("/beheer");
 });
+
 
 // ----- Route handlers -----
 async function toonIndex(req, res, next) {
