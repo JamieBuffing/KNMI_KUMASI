@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <%- include('../partials/head'); %>
-    <title>Login</title>
+    <title>Login verification</title>
     <link rel="stylesheet" href="/css/login.css">
 </head>
 <body>
@@ -12,23 +12,25 @@
     <main>
         <div class="auth-page">
             <div class="auth-card">
-                <h1 class="auth-title">Login</h1>
-                <p class="auth-subtitle">Enter your email address to receive a login code.</p>
+                <h1 class="auth-title">Verify Code</h1>
+                <p class="auth-subtitle">
+                    Enter the 6-digit code we sent to your email address.
+                </p>
 
                 <% if (typeof error !== 'undefined' && error) { %>
                     <div class="auth-error"><%= error %></div>
                 <% } %>
 
-                <form method="POST" action="/loginform" class="auth-form">
+                <form method="POST" action="/loginVerification" class="auth-form">
                     <div>
-                        <label for="email">Email address</label>
-                        <input id="email" name="email" type="email" class="auth-input" required>
+                        <label for="code">Login code</label>
+                        <input id="code" name="code" type="text" class="auth-input" required>
                     </div>
-                    <button type="submit" class="auth-button">Send code</button>
+                    <button type="submit" class="auth-button">Log in</button>
                 </form>
 
                 <p class="auth-footer-text">
-                    You will receive an email with your login code within a few seconds.
+                    Didn’t receive a code? Check your spam folder or try logging in again.
                 </p>
             </div>
         </div>

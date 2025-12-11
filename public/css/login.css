@@ -1,0 +1,131 @@
+/* ===== Algemene layout voor login / verification pagina's ===== */
+
+main {
+  height: 82%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Buitenste container zodat alles netjes in het midden komt */
+
+.auth-page {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* De "card" rond het formulier */
+
+.auth-card {
+  background-color: #ffffff;
+  color: #000000;
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e0e0e0;
+}
+
+/* Titel + subtitel */
+
+.auth-title {
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+
+.auth-subtitle {
+  font-size: 0.9rem;
+  color: #555555;
+  margin-bottom: 18px;
+}
+
+/* Formulier zelf */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-form label {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #c7c7c7;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.auth-input:focus {
+  border-color: #0078a8;
+  box-shadow: 0 0 0 2px rgba(0, 120, 168, 0.2);
+  background-color: #f9fcff;
+}
+
+/* Foutmelding */
+
+.auth-error {
+  background-color: #ffe2e2;
+  color: #b30000;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+}
+
+/* Submit button */
+
+.auth-button {
+  margin-top: 6px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #096e00, #0ca000);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.auth-button:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.auth-button:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+  opacity: 0.9;
+}
+
+/* Kleine extra tekst onder het formulier (optioneel) */
+
+.auth-footer-text {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: #555555;
+  text-align: center;
+}
+
+/* Responsief: op hele kleine schermen wat minder padding */
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 18px 16px;
+    border-radius: 12px;
+  }
+
+  .auth-title {
+    font-size: 1.2rem;
+  }
+}
