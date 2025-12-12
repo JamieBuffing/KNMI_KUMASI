@@ -53,25 +53,31 @@ function createUiLogin() {
   menuControl.onAdd = function () {
     const container = L.DomUtil.create('div', 'menu-control');
 
-    const select = L.DomUtil.create('select', 'menu-button', container);
-    select.name = 'menu';
+    const button = L.DomUtil.create('button', 'menu-button', container);
+    button.type = 'button';
+    button.textContent = '☰';
 
-    const options = [
-      { value: '', text: '☰' },
-      { value: '/login', text: 'Login' },
-      { value: '/data', text: 'Data' }
+    const menu = L.DomUtil.create('div', 'menu-dropdown', container);
+
+    const items = [
+      { href: '/login', text: 'Login' },
+      { href: '/data', text: 'Data' }
     ];
 
-    options.forEach(opt => {
-      const option = document.createElement('option');
-      option.value = opt.value;
-      option.textContent = opt.text;
-      select.appendChild(option);
+    items.forEach(item => {
+      const a = L.DomUtil.create('a', 'menu-item', menu);
+      a.href = item.href;
+      a.textContent = item.text;
     });
 
-    select.addEventListener('change', function () {
-      if (this.value) {
-        window.location.href = this.value;
+    button.addEventListener('click', () => {
+      menu.classList.toggle('open');
+    });
+
+    // sluit bij klik buiten menu
+    document.addEventListener('click', e => {
+      if (!container.contains(e.target)) {
+        menu.classList.remove('open');
       }
     });
 
