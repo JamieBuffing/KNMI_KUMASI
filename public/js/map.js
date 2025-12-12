@@ -48,20 +48,40 @@ function extractAvailableYears(points) {
 }
 
 function createUiLogin() {
-  const login = L.control({ position: 'topright' });
-  login.onAdd = function () {
-    const container = L.DomUtil.create('div', 'login-control');
-    const loginLink = L.DomUtil.create('a', '', container);
-    loginLink.id = 'login';
-    loginLink.href = '/login';
-    loginLink.textContent = 'Login';
+  const menuControl = L.control({ position: 'topright' });
+
+  menuControl.onAdd = function () {
+    const container = L.DomUtil.create('div', 'menu-control');
+
+    const select = L.DomUtil.create('select', 'menu-button', container);
+    select.name = 'menu';
+
+    const options = [
+      { value: '', text: '☰' },
+      { value: '/login', text: 'Login' },
+      { value: '/data', text: 'Data' }
+    ];
+
+    options.forEach(opt => {
+      const option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.text;
+      select.appendChild(option);
+    });
+
+    select.addEventListener('change', function () {
+      if (this.value) {
+        window.location.href = this.value;
+      }
+    });
+
     L.DomEvent.disableClickPropagation(container);
     L.DomEvent.disableScrollPropagation(container);
 
     return container;
   };
 
-  return login;
+  return menuControl;
 }
 
 // UI control (bottom-left) with year buttons + month slider

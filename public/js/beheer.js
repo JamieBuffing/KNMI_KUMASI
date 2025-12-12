@@ -11,12 +11,6 @@ async function fetchPoints() {
 }
 let allPoints = [];
 
-/**
- * Normalize a numeric input string:
- * - replace comma with dot
- * - parse to Number
- * - return null if invalid
- */
 function normalizeValue(inputString) {
   if (!inputString) return null;
 
@@ -437,7 +431,6 @@ function setupBatchForm(points) {
   if (!form) return;
 
   renderBatchRows(points);
-  // initBatchMetaDefaults(); // ⛔ niet meer nodig
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();

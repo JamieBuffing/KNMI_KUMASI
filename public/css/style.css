@@ -86,6 +86,34 @@ main {
   border-bottom: 1px solid var(--color-border);
 }
 
+.menu-button {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background: var(--color-surface);
+  border: none;
+  box-shadow: var(--shadow-soft);
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  padding: 8px 12px;
+  line-height: 1;
+
+  text-align: center;
+}
+
+/* Verwijder focus-rand */
+.menu-button:focus {
+  outline: none;
+}
+
+/* Zorgt dat IE/Edge geen pijltje toont */
+.menu-button::-ms-expand {
+  display: none;
+}
+
 /* Homepagina: kaart tussen header en footer, full height */
 
 .page-home main {
