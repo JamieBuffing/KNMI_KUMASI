@@ -11,6 +11,10 @@ async function fetchPoints() {
 }
 let allPoints = [];
 
+// ---- NO2 (µg/m³) input rules ----
+const MEASUREMENT_MIN = 0;
+const MEASUREMENT_MAX = 200; // pas aan als je strakker wil
+
 function normalizeValue(inputString) {
   if (!inputString) return null;
 
@@ -86,10 +90,10 @@ function renderPointsTable(points) {
     if (aActive !== bActive) return aActive ? -1 : 1;
 
     const aName = (
-      (a && (a.description || a.name || a.stationName)) || ""
+      (a && (a.location || a.description || a.name || a.stationName)) || ""
     ).toLowerCase();
     const bName = (
-      (b && (b.description || b.name || b.stationName)) || ""
+      (b && (b.location || b.description || b.name || b.stationName)) || ""
     ).toLowerCase();
     return aName.localeCompare(bName);
   });
@@ -109,7 +113,7 @@ function renderPointsTable(points) {
     });
 
     const name =
-      (p && (p.description || p.name || p.stationName)) ||
+      (p && (p.location || p.description || p.name || p.stationName)) ||
       `Point ${index + 1}`;
 
     const coords = (p && p.coordinates) || {};
@@ -347,6 +351,8 @@ function setupUsersSection() {
 /* ---------- Batch measurements ---------- */
 
 function initBatchMetaDefaults() {
+  const yearInput = document.getElementById("batch-year");
+  const monthSelect = document.getElementById("batch-month");
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -378,8 +384,8 @@ function renderBatchRows(points) {
 
   // Sort active points by name for a stable order
   const sorted = activePoints.slice().sort((a, b) => {
-    const aName = (a.description || a.name || a.stationName || "").toLowerCase();
-    const bName = (b.description || b.name || b.stationName || "").toLowerCase();
+    const aName = (a.location || a.description || a.name || a.stationName || "").toLowerCase();
+    const bName = (b.location || b.description || b.name || b.stationName || "").toLowerCase();
     return aName.localeCompare(bName);
   });
 
@@ -388,6 +394,7 @@ function renderBatchRows(points) {
     row.className = "batch-row";
 
     const name =
+      p.location ||
       p.description ||
       p.name ||
       p.stationName ||
@@ -401,8 +408,13 @@ function renderBatchRows(points) {
       <div class="batch-row-name">${name}</div>
       <div class="batch-row-inputs">
         <label>
-          <span>Value (0–1)</span>
-          <input type="number" class="batch-value-input" step="0.01" min="0" max="1" />
+          <span>Value (µg/m³)</span>
+          <input
+            type="text"
+            class="batch-value-input"
+            inputmode="decimal"
+            placeholder="e.g. 25,5"
+          />
         </label>
         <label class="batch-no-measurement">
           <input type="checkbox" class="batch-no-measurement-checkbox" />
@@ -430,11 +442,22 @@ function setupBatchForm(points) {
   const statusEl = document.getElementById("batch-status");
   if (!form) return;
 
+  const yearInput = document.getElementById("batch-year");
+  const monthSelect = document.getElementById("batch-month");
+
   renderBatchRows(points);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (statusEl) statusEl.textContent = "";
+
+    const year = yearInput ? Number(String(yearInput.value || "").trim()) : NaN;
+    const month = monthSelect ? Number(String(monthSelect.value || "").trim()) : NaN;
+
+    if (!Number.isFinite(year) || year < 2000 || year > 2100 || !Number.isFinite(month) || month < 1 || month > 12) {
+      if (statusEl) statusEl.textContent = "Selecteer een geldig jaar en maand.";
+      return;
+    }
 
     const entries = [];
     const rows = document.querySelectorAll("#batch-points-list .batch-row");
@@ -460,12 +483,23 @@ function setupBatchForm(points) {
         return;
       }
 
+      // Regel: niet allebei tegelijk
+      if (rawValue && noMeasurement) {
+        hasRowError = true;
+        row.classList.add("batch-row-error");
+        return;
+      }
+
       let numericValue = null;
       if (!noMeasurement && rawValue) {
         numericValue = normalizeValue(rawValue);
 
         // Invalid or out-of-range value → markeer rij als error
-        if (numericValue === null || numericValue < 0 || numericValue > 1) {
+        if (
+          numericValue === null ||
+          numericValue < MEASUREMENT_MIN ||
+          numericValue > MEASUREMENT_MAX
+        ) {
           hasRowError = true;
           row.classList.add("batch-row-error");
           return;
@@ -482,7 +516,7 @@ function setupBatchForm(points) {
     if (hasRowError) {
       if (statusEl) {
         statusEl.textContent =
-          "Vul bij elk meetpunt een waarde in (tussen 0 en 1) of vink 'No measurement possible' aan.";
+          `Vul bij elk meetpunt een waarde in (${MEASUREMENT_MIN}–${MEASUREMENT_MAX} µg/m³) of vink 'No measurement possible' aan.`;
       }
       return;
     }
@@ -500,8 +534,7 @@ function setupBatchForm(points) {
         headers: {
           "Content-Type": "application/json",
         },
-        // 👇 alleen entries; datum wordt server-side bepaald
-        body: JSON.stringify({ entries }),
+        body: JSON.stringify({ year, month, entries }),
       });
 
       const data = await res.json();
@@ -535,7 +568,7 @@ function setupAddPointButton() {
     if (!startDate) return;
 
     const firstValueStr = prompt(
-      "First measurement value between 0 and 1 (optional, leave empty for none):"
+      `First measurement value (${MEASUREMENT_MIN}–${MEASUREMENT_MAX} µg/m³) (optional, leave empty for none):`
     );
 
     const payload = {
@@ -597,6 +630,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupSearch();
 
   setupUsersSection();
+  initBatchMetaDefaults();
   setupBatchForm(allPoints);
   setupAddPointButton();
 });

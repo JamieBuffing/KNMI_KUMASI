@@ -10,6 +10,10 @@ const rateLimit = require("express-rate-limit");
 
 const keuzes = require("./public/data/keuzes.json");
 
+// ---- NO2 (µg/m³) validation rules ----
+const MEASUREMENT_MIN = 0;
+const MEASUREMENT_MAX = 200; // moet matchen met beheer.js
+
 // ----- DB config from .env -----
 const uri = process.env.MONGODB_URI && process.env.MONGODB_URI.trim();
 const dbName = process.env.MONGODB_DB_NAME && process.env.MONGODB_DB_NAME.trim();
@@ -194,9 +198,9 @@ app.post("/api/points", requireAuth, async (req, res, next) => {
       const cleaned = String(firstValue).replace(",", ".");
       const v = Number(cleaned);
 
-      if (!Number.isFinite(v) || v < 0 || v > 1) {
+      if (!Number.isFinite(v) || v < MEASUREMENT_MIN || v > MEASUREMENT_MAX) {
         return res.status(400).json({
-          error: "firstValue must be a number between 0 and 1.",
+          error: `firstValue must be a number between ${MEASUREMENT_MIN} and ${MEASUREMENT_MAX} (µg/m³).`,
         });
       }
 
@@ -335,29 +339,33 @@ app.delete("/api/users/:id", requireAuth, async (req, res, next) => {
 });
 
 // ----- Batch measurements API -----
+// Verwacht: { year: 2025, month: 9, entries: [...] }
+// Slaat op met date = eerste dag van die maand (UTC): 2025-09-01T00:00:00.000Z
 app.post("/api/measurements/batch", requireAuth, async (req, res, next) => {
   try {
-    const { entries } = req.body;
+    const { year, month, entries } = req.body;
 
     if (!Array.isArray(entries)) {
       return res.status(400).json({ error: "Invalid payload: entries must be an array." });
     }
 
+    const y = Number(year);
+    const m = Number(month);
+
+    if (!Number.isFinite(y) || y < 2000 || y > 2100 || !Number.isFinite(m) || m < 1 || m > 12) {
+      return res.status(400).json({ error: "Invalid payload: year/month required." });
+    }
+
     const db = await getDb();
     const collection = db.collection("Data");
 
-    // 🔥 Gebruik altijd de huidige datum (zonder tijd, lokale dag)
-    const now = new Date();
-    const measurementDate = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    );
+    // Period date = first day of that month (UTC midnight)
+    const measurementDate = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0));
 
     const bulkOps = [];
 
     // Zelfde regel als in beheer.js:
-    // per entry: óf een value (0–1), óf noMeasurement = true,
+    // per entry: óf een value (µg/m³), óf noMeasurement = true,
     // maar niet beide en niet allebei leeg.
     for (const [index, entry] of entries.entries()) {
       const pointId = entry.pointId;
@@ -398,10 +406,10 @@ app.post("/api/measurements/batch", requireAuth, async (req, res, next) => {
         const cleaned = rawValueString.replace(",", ".");
         const num = Number(cleaned);
 
-        // alleen 0–1 toestaan
-        if (!Number.isFinite(num) || num < 0 || num > 1) {
+        // alleen range toestaan
+        if (!Number.isFinite(num) || num < MEASUREMENT_MIN || num > MEASUREMENT_MAX) {
           return res.status(400).json({
-            error: "Measurement values must be between 0 and 1.",
+            error: `Measurement values must be between ${MEASUREMENT_MIN} and ${MEASUREMENT_MAX} (µg/m³).`,
             index,
           });
         }
