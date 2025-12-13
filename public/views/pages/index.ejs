@@ -17,5 +17,11 @@
         <%- include('../partials/footer'); %>
     </footer>
     <script src="/js/map.js" defer></script>
+    <script id="boot-data" type="application/json">
+        <%- JSON.stringify({
+            keuzes: keuzes || [],
+            points: initialPoints || []
+        }) %>
+    </script>
 </body>
 </html>

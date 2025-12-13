@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head'); %>
+    <title>Data</title>
+    <link rel="stylesheet" href="/css/data.css">
+</head>
+<body>
+<header>
+    <%- include('../partials/header'); %>
+</header>
+
+<main class="data-page">
+
+    <section class="data-card data-hero">
+        <div>
+            <h1>Data</h1>
+            <p>
+                This dataset contains measurement locations and (optionally) associated NO₂ measurements (µg/m³).
+                The data is intended for educational and informational purposes.
+            </p>
+            <div class="meta">
+                Public API:
+                <span class="code-pill">
+                    GET <span class="api-url" data-path="/api/public/data"></span>
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <section class="data-card data-disclaimer">
+        <h2>Disclaimer</h2>
+        <p>
+            Use this data at your own risk. We aim for quality, but we cannot guarantee completeness,
+            accuracy, or fitness for a particular purpose. This is not an official monitoring network
+            and should not be used as legal or medical evidence.
+        </p>
+    </section>
+
+    <section class="data-card">
+        <h2>Download</h2>
+        <p>
+            Downloads always return the full dataset and do not accept filters.
+        </p>
+        <div class="download-row">
+            <a class="btn btn-primary" href="/downloads/data.json">Download JSON</a>
+            <a class="btn" href="/downloads/data.csv">Download CSV</a>
+            <a class="btn" href="/downloads/data.xlsx">Download XLSX</a>
+        </div>
+    </section>
+
+    <section class="data-card">
+        <h2>API Key</h2>
+        <p>
+            To use the public API you need an API key.
+        </p>
+        <div class="action-row">
+            <a class="btn btn-primary" href="/api-key">Request an API key</a>
+        </div>
+    </section>
+
+    <section class="data-card">
+        <h2>API Documentation</h2>
+
+        <h3>Base endpoint</h3>
+        <pre class="code-block">
+GET <span class="api-url" data-path="/api/public/data"></span>
+        </pre>
+
+        <h3>Authentication</h3>
+        <p>All API requests require an API key.</p>
+        <ul>
+            <li>Recommended: <span class="code-pill">x-api-key</span> request header</li>
+            <li>Browser/testing fallback: <span class="code-pill">?apiKey=YOUR_KEY</span></li>
+        </ul>
+        <pre class="code-block">
+GET <span class="api-url" data-path="/api/public/data?apiKey=YOUR_KEY"></span>
+        </pre>
+
+        <h3>Pagination</h3>
+        <p>
+            Results are paginated to limit response size.
+        </p>
+        <ul>
+            <li><span class="code-pill">page</span> – page number (default: 1)</li>
+            <li><span class="code-pill">limit</span> – items per page (default: 50, max: 200)</li>
+        </ul>
+        <pre class="code-block">
+GET <span class="api-url" data-path="/api/public/data?page=2&limit=5"></span>
+        </pre>
+
+        <h3>Filtering by activity status</h3>
+        <p>
+            Filter points by whether they are active.
+        </p>
+        <ul>
+            <li><span class="code-pill">active=true</span> – only active points</li>
+            <li><span class="code-pill">active=false</span> – only inactive points</li>
+            <li><span class="code-pill">active=all</span> – all points (default)</li>
+        </ul>
+        <pre class="code-block">
+GET <span class="api-url" data-path="/api/public/data?active=true"></span>
+        </pre>
+
+        <h3>Filtering by point number</h3>
+        <p>
+            Retrieve one or more specific measurement points.
+        </p>
+        <ul>
+            <li><span class="code-pill">point</span> – exact point number</li>
+            <li><span class="code-pill">pointMin</span> – minimum point number</li>
+            <li><span class="code-pill">pointMax</span> – maximum point number</li>
+        </ul>
+        <pre class="code-block">
+GET <span class="api-url" data-path="/api/public/data?point=14"></span>
+        </pre>
+        <pre class="code-block">
+GET <span class="api-url" data-path="/api/public/data?pointMin=5&pointMax=10"></span>
+        </pre>
+
+        <h3>Including measurements</h3>
+        <p>
+            By default, measurement data is not included.
+        </p>
+        <pre class="code-block">
+GET <span class="api-url" data-path="/api/public/data?includeMeasurements=true"></span>
+        </pre>
+
+        <h3>Filtering measurements by month</h3>
+        <p>
+            Filter measurements using a month range (<strong>YYYY-MM</strong>).
+        </p>
+        <ul>
+            <li><span class="code-pill">mFrom</span> – start month</li>
+            <li><span class="code-pill">mTo</span> – end month</li>
+        </ul>
+        <pre class="code-block">
+GET <span class="api-url" data-path="/api/public/data?includeMeasurements=true&mFrom=2025-11&mTo=2025-11"></span>
+        </pre>
+
+        <h3>Latest measurement only</h3>
+        <p>
+            Return only the most recent measurement per point.
+        </p>
+        <pre class="code-block">
+GET <span class="api-url" data-path="/api/public/data?includeMeasurements=true&latestOnly=true"></span>
+        </pre>
+
+        <h3>Limit measurements per point</h3>
+        <p>
+            Restrict the number of measurements returned per point.
+        </p>
+        <ul>
+            <li><span class="code-pill">mLimit</span> – max measurements per point (default: 24)</li>
+        </ul>
+        <pre class="code-block">
+GET <span class="api-url" data-path="/api/public/data?includeMeasurements=true&mLimit=6"></span>
+        </pre>
+
+    </section>
+
+</main>
+
+<footer>
+    <%- include('../partials/footer'); %>
+</footer>
+
+<script src="/js/dataDocs.js"></script>
+</body>
+</html>

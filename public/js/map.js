@@ -270,7 +270,6 @@ function updateMonthLabel() {
   monthLabelEl.textContent = MONTH_NAMES[monthIndex];
 }
 
-
 // Draw markers for selected year + month
 function updateMarkers() {
   if (!map || !allPoints || !selectedYear) return;
@@ -564,47 +563,56 @@ function updateMarkers() {
   });
 }
 
-// ------------ INIT: map + data fetch ------------
+// ------------ INIT: map + boot data (NO FETCH) ------------
 
-fetch("/api/keuzes")
-  .then(res => res.json())
-  .then(keuzes => {
-    const coords = keuzes.Coordinaten;
+(function initFromBootData() {
+  const bootEl = document.getElementById("boot-data");
+  const boot = bootEl ? JSON.parse(bootEl.textContent) : { keuzes: {}, points: [] };
 
-    map = L.map("map").setView(coords, 13);
+  const keuzes = boot.keuzes || {};
+  const pointsRaw = Array.isArray(boot.points) ? boot.points : [];
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 17
-    }).addTo(map);
+  // coords from keuzes (your current structure)
+  const coords = Array.isArray(keuzes.Coordinaten) ? keuzes.Coordinaten : null;
 
-    // then load DB data
-    return fetch("/api/data");
-  })
-  .then(res => res.json())
-  .then(points => {
-    console.log("API /data response:", points); // debug
+  // Create map with safe defaults if coords missing
+  const startCoords = (coords && coords.length === 2) ? coords : [0, 0];
+  const startZoom = 13;
 
-    allPoints = points;
+  map = L.map("map").setView(startCoords, startZoom);
 
-    const years = extractAvailableYears(points);
-    availableMonthsByYear = buildAvailableMonthsByYear(points);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 17
+  }).addTo(map);
 
-    if (years.length === 0) {
-      console.warn("No years found in measurement data");
-      return;
-    }
+  // Points: keep only those that won't crash later
+  allPoints = pointsRaw.filter(p => {
+    const lat = p?.coordinates?.lat;
+    const lon = p?.coordinates?.lon;
+    return (typeof lat === "number" && !Number.isNaN(lat) && typeof lon === "number" && !Number.isNaN(lon));
+  });
 
-    selectedYear = years[years.length - 1];
+  const years = extractAvailableYears(allPoints);
+  availableMonthsByYear = buildAvailableMonthsByYear(allPoints);
 
-    const uiControl = createUiControl(years);
-    uiControl.addTo(map);
-
+  if (years.length === 0) {
+    console.warn("No years found in measurement data");
     const loginControl = createUiLogin();
     loginControl.addTo(map);
-
-    // ✅ now slider exists, so this works
-    updateMonthSliderForYear(selectedYear);
-
     updateMarkers();
-  })
-  .catch(err => console.error(err));
+    return;
+  }
+
+  selectedYear = years[years.length - 1];
+
+  const uiControl = createUiControl(years);
+  uiControl.addTo(map);
+
+  const loginControl = createUiLogin();
+  loginControl.addTo(map);
+
+  // slider exists, so this works
+  updateMonthSliderForYear(selectedYear);
+
+  updateMarkers();
+})();

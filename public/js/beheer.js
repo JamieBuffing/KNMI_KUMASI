@@ -454,11 +454,6 @@ function setupBatchForm(points) {
     const year = yearInput ? Number(String(yearInput.value || "").trim()) : NaN;
     const month = monthSelect ? Number(String(monthSelect.value || "").trim()) : NaN;
 
-    if (!Number.isFinite(year) || year < 2000 || year > 2100 || !Number.isFinite(month) || month < 1 || month > 12) {
-      if (statusEl) statusEl.textContent = "Selecteer een geldig jaar en maand.";
-      return;
-    }
-
     const entries = [];
     const rows = document.querySelectorAll("#batch-points-list .batch-row");
     let hasRowError = false;

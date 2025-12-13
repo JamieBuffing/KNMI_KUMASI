@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head'); %>
+    <title>Verify email</title>
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+    <header>
+        <%- include('../partials/header'); %>
+    </header>
+    <main>
+        <div class="auth-page">
+            <div class="auth-card">
+                <h1 class="auth-title">Verify your email</h1>
+                <p class="auth-subtitle">
+                    Enter the 6-digit code we sent to your email address.
+                </p>
+
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="auth-error"><%= error %></div>
+                <% } %>
+
+                <form method="POST" action="/api-key/verify" class="auth-form">
+                    <div>
+                        <label for="code">Verification code</label>
+                        <input id="code" name="code" type="text" class="auth-input" required>
+                    </div>
+                    <button type="submit" class="auth-button">Confirm & get API key</button>
+                </form>
+
+                <p class="auth-footer-text">
+                    Didn’t receive a code? Check your spam folder or request a new one.
+                </p>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <%- include('../partials/footer'); %>
+    </footer>
+</body>
+</html>
