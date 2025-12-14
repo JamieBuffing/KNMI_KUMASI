@@ -17,6 +17,9 @@ const MONTH_NAMES = [
   "September", "October", "November", "December"
 ];
 
+// ✅ FIX: popup pane name (so popups can be above Leaflet controls)
+const POPUP_PANE_TOP = "popupTop";
+
 // ---- Units + WHO thresholds (NO2) ----
 // WHO AQG 2021 for NO2: annual 10 µg/m³, 24-hour 25 µg/m³
 const VALUE_SUFFIX = " µg/m³";
@@ -274,7 +277,6 @@ function updateMonthLabel() {
 function updateMarkers() {
   if (!map || !allPoints || !selectedYear) return;
   if (!monthSlider) return;
-
   if (!activeMonths || activeMonths.length === 0) return;
 
   const sliderIdx = Number(monthSlider.value); // 0..activeMonths.length-1
@@ -303,7 +305,6 @@ function updateMarkers() {
       if (!m.date) return false;
       const d = new Date(m.date);
       if (Number.isNaN(d.getTime())) return false;
-
       return d.getFullYear() === selectedYear && d.getMonth() === monthIndex;
     });
 
@@ -357,72 +358,102 @@ function updateMarkers() {
         const category = isNo ? "No measurement possible" : getCategory(value);
 
         // ----- Mini line chart (SVG) -----
-        // Only draw if we have at least 2 numeric values in that year
+        // Dots for >= 1 numeric value; lines only where months are consecutive.
         const numericYearMeasurements = yearMeasurements
           .filter(m => !m.noMeasurement && typeof m.value === "number" && !Number.isNaN(m.value));
 
         let sparklineSvg = "";
-        if (numericYearMeasurements.length > 1) {
-          const vals = numericYearMeasurements.map(m => m.value);
+        if (numericYearMeasurements.length >= 1) {
+          const sorted = [...numericYearMeasurements].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+          const vals = sorted.map(m => m.value);
           const max = Math.max(...vals);
           const min = Math.min(...vals);
 
-          const w = 130;
-          const h = 55;
-          const paddingLeft = 20;
-          const paddingBottom = 14;
-          const paddingRight = 10;
+          // Virtual size; SVG scales to container width via viewBox + width=100%
+          const w = 200;
+          const h = 80;
 
-          const innerW = w - paddingLeft - paddingRight;
-          const innerH = h - paddingBottom;
+          const padding = 10;
+          const paddingRight = padding;
+          const paddingBottom = padding + 8;
+          const paddingTop = padding;
 
+          // Labels (used to size left room)
           const minLabel = min.toFixed(2);
           const maxLabel = max.toFixed(2);
+          const labelChars = Math.max(minLabel.length, maxLabel.length);
+          const yLabelRoom = Math.max(28, labelChars * 6); // ~6px per char safety
+          const paddingLeft = padding + yLabelRoom; // keep 10px padding + label room
 
-          const coords = (i, v) => {
+          const innerW = w - paddingLeft - paddingRight;
+          const innerH = h - paddingTop - paddingBottom;
+
+          const yForValue = (v) => {
             const t = (max === min) ? 0.5 : (v - min) / (max - min); // 0–1
-            const x = paddingLeft + (numericYearMeasurements.length === 1
-              ? innerW / 2
-              : (i / (numericYearMeasurements.length - 1)) * innerW);
-            const y = innerH - t * innerH;
-            return { x, y };
+            return paddingTop + (innerH - t * innerH);
           };
 
-          const positions = numericYearMeasurements.map((m, i) => {
+          const xForMonth = (mIdx) => {
+            // Spread across Jan..Dec. Missing months become gaps.
+            return paddingLeft + (mIdx / 11) * innerW;
+          };
+
+          const positions = sorted.map((m) => {
             const d = new Date(m.date);
+            const mIdx = d.getMonth(); // 0–11
             const monthShort = d.toLocaleString("en-US", { month: "short" });
-            const { x, y } = coords(i, m.value);
-            return { x, y, monthShort, value: m.value };
+            return { x: xForMonth(mIdx), y: yForValue(m.value), monthShort, value: m.value, monthIndex: mIdx };
           });
 
-          const pointsAttr = positions.map(p => `${p.x},${p.y}`).join(" ");
+          const xAxisEnd = paddingLeft + innerW;
 
-          const stops = positions.map((p, i) => {
-            const offset = (positions.length === 1)
-              ? 0
-              : (i / (positions.length - 1)) * 100;
+          // Gradient stops based on x-position
+          const stops = positions.map((p) => {
+            const offset = innerW ? ((p.x - paddingLeft) / innerW) * 100 : 0;
             const c = getColor(normalizeForColor(p.value));
             return `<stop offset="${offset}%" stop-color="${c}" />`;
           }).join("");
 
-          const xTicks = positions.map(p => `
-            <line x1="${p.x}" y1="${innerH}" x2="${p.x}" y2="${innerH + 5}" stroke="#888888" stroke-width="1" />
-          `).join("");
+          // Split into segments when there is a gap of >= 2 months
+          const segments = [];
+          let current = [positions[0]];
 
+          for (let i = 1; i < positions.length; i++) {
+            const prev = positions[i - 1];
+            const cur = positions[i];
+            const gap = cur.monthIndex - prev.monthIndex;
+
+            if (gap > 1) {
+              segments.push(current);
+              current = [cur];
+            } else {
+              current.push(cur);
+            }
+          }
+          segments.push(current);
+
+          // Polylines only for segments with 2+ points
+          const polylines = segments
+            .filter(seg => seg.length >= 2)
+            .map(seg => {
+              const pointsAttr = seg.map(p => `${p.x},${p.y}`).join(" ");
+              return `<polyline points="${pointsAttr}" fill="none" stroke="url(#gradLine)" stroke-width="2" />`;
+            })
+            .join("");
+
+          // Dots for every measurement (also single isolated months)
+          const circles = positions.map(p => {
+            const dotColor = getColor(normalizeForColor(p.value));
+            return `<circle cx="${p.x}" cy="${p.y}" r="2.6" fill="${dotColor}" stroke="#ffffff" stroke-width="1" />`;
+          }).join("");
+
+          // Labels/ticks
           const firstPos = positions[0];
           const lastPos = positions[positions.length - 1];
-          const firstLabelX = firstPos.x;
-          const lastLabelX = Math.min(lastPos.x, w - 8);
-
-          const xLabels = `
-            <text x="${firstLabelX}" y="${h - 2}" font-size="8" text-anchor="middle">${firstPos.monthShort}</text>
-            <text x="${lastLabelX}" y="${h - 2}" font-size="8" text-anchor="middle">${lastPos.monthShort}</text>
-          `;
-
-          const xAxisEnd = paddingLeft + innerW;
 
           sparklineSvg = `
-            <svg width="${w}" height="${h}">
+            <svg width="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow: visible;">
               <defs>
                 <linearGradient id="gradLine" x1="${paddingLeft}" y1="0" x2="${xAxisEnd}" y2="0" gradientUnits="userSpaceOnUse">
                   ${stops}
@@ -430,28 +461,31 @@ function updateMarkers() {
               </defs>
 
               <!-- Y-axis -->
-              <line x1="${paddingLeft}" y1="0" x2="${paddingLeft}" y2="${innerH}" stroke="#cccccc" stroke-width="1" />
+              <line x1="${paddingLeft}" y1="${paddingTop}" x2="${paddingLeft}" y2="${paddingTop + innerH}" stroke="#cccccc" stroke-width="1" />
+
               <!-- X-axis -->
-              <line x1="${paddingLeft}" y1="${innerH}" x2="${xAxisEnd}" y2="${innerH}" stroke="#cccccc" stroke-width="1" />
+              <line x1="${paddingLeft}" y1="${paddingTop + innerH}" x2="${xAxisEnd}" y2="${paddingTop + innerH}" stroke="#cccccc" stroke-width="1" />
 
               <!-- Mid tick on Y-axis -->
-              <line x1="${paddingLeft - 3}" y1="${innerH / 2}" x2="${paddingLeft}" y2="${innerH / 2}" stroke="#cccccc" stroke-width="1" />
+              <line x1="${paddingLeft - 3}" y1="${paddingTop + innerH / 2}" x2="${paddingLeft}" y2="${paddingTop + innerH / 2}" stroke="#cccccc" stroke-width="1" />
 
-              <!-- Y-axis min/max labels -->
-              <text x="${paddingLeft - 4}" y="8" font-size="8" text-anchor="end">${maxLabel}</text>
-              <text x="${paddingLeft - 4}" y="${innerH - 2}" font-size="8" text-anchor="end">${minLabel}</text>
+              <!-- Y-axis max/min labels -->
+              <text x="${paddingLeft - 4}" y="${paddingTop + 8}" font-size="8" text-anchor="end">${maxLabel}</text>
+              <text x="${paddingLeft - 4}" y="${paddingTop + innerH - 2}" font-size="8" text-anchor="end">${minLabel}</text>
 
-              <!-- X-axis ticks & first/last month labels -->
-              ${xTicks}
-              ${xLabels}
+              <!-- X-axis ticks -->
+              <line x1="${firstPos.x}" y1="${paddingTop + innerH}" x2="${firstPos.x}" y2="${paddingTop + innerH + 5}" stroke="#888888" stroke-width="1" />
+              <line x1="${lastPos.x}"  y1="${paddingTop + innerH}" x2="${lastPos.x}"  y2="${paddingTop + innerH + 5}" stroke="#888888" stroke-width="1" />
 
-              <!-- Gradient data line -->
-              <polyline 
-                points="${pointsAttr}"
-                fill="none"
-                stroke="url(#gradLine)"
-                stroke-width="2"
-              />
+              <!-- X-axis labels -->
+              <text x="${firstPos.x}" y="${h - 2}" font-size="8" text-anchor="middle">${firstPos.monthShort}</text>
+              <text x="${Math.min(lastPos.x, w - 8)}" y="${h - 2}" font-size="8" text-anchor="middle">${lastPos.monthShort}</text>
+
+              <!-- Segmented data lines -->
+              ${polylines}
+
+              <!-- Dots -->
+              ${circles}
             </svg>
           `;
         } else {
@@ -559,6 +593,15 @@ function updateMarkers() {
             </div>
           </div>
         `;
+      }, {
+        // ✅ FIX: popups in high z-index pane (above +/- buttons)
+        pane: POPUP_PANE_TOP,
+
+        // ✅ FIX: all measurement popups same width
+        minWidth: 320,
+        maxWidth: 320,
+
+        autoPanPadding: [10, 10]
       });
   });
 }
@@ -580,6 +623,28 @@ function updateMarkers() {
   const startZoom = 13;
 
   map = L.map("map").setView(startCoords, startZoom);
+
+  // Hide all Leaflet UI controls when a popup opens (top + bottom controls)
+  function setUiHidden(hidden) {
+    const root = map.getContainer();
+
+    // Hide ALL Leaflet controls (zoom, your menu control, bottom-left UI control, etc.)
+    root.querySelectorAll(".leaflet-control-container .leaflet-control").forEach(el => {
+      el.style.display = hidden ? "none" : "";
+    });
+
+    // Safety: if your menu is not inside leaflet-control (rare), also hide it
+    root.querySelectorAll(".menu-control").forEach(el => {
+      el.style.display = hidden ? "none" : "";
+    });
+  }
+
+  map.on("popupopen", () => setUiHidden(true));
+  map.on("popupclose", () => setUiHidden(false));
+
+  // ✅ FIX: create popup pane ABOVE Leaflet controls
+  map.createPane(POPUP_PANE_TOP);
+  map.getPane(POPUP_PANE_TOP).style.zIndex = "5000";
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 17
