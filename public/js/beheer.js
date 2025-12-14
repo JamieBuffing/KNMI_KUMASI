@@ -354,16 +354,24 @@ function initBatchMetaDefaults() {
   const yearInput = document.getElementById("batch-year");
   const monthSelect = document.getElementById("batch-month");
 
+  // Default = previous month (required by design).
+  // If today is January, default becomes December of the previous year.
   const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1; // 1–12
+  let y = now.getFullYear();
+  let m = now.getMonth() + 1; // 1–12
+
+  m -= 1;
+  if (m < 1) {
+    m = 12;
+    y -= 1;
+  }
 
   if (yearInput) {
-    yearInput.value = currentYear;
+    yearInput.value = String(y);
   }
 
   if (monthSelect) {
-    monthSelect.value = String(currentMonth);
+    monthSelect.value = String(m);
   }
 }
 
@@ -453,6 +461,12 @@ function setupBatchForm(points) {
 
     const year = yearInput ? Number(String(yearInput.value || "").trim()) : NaN;
     const month = monthSelect ? Number(String(monthSelect.value || "").trim()) : NaN;
+
+    
+  if (!Number.isFinite(year) || year < 2000 || year > 2100 || !Number.isFinite(month) || month < 1 || month > 12) {
+    if (statusEl) statusEl.textContent = "Please select a valid year and month.";
+    return;
+  }
 
     const entries = [];
     const rows = document.querySelectorAll("#batch-points-list .batch-row");

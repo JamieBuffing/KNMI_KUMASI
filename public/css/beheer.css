@@ -283,6 +283,8 @@
   border: 1px solid #cccccc;
   font-size: 0.85rem;
   min-width: 100px;
+  background: #ffffff;
+  color: #000000;
 }
 
 .batch-meta input:focus,
@@ -324,15 +326,22 @@
   font-size: 0.8rem;
 }
 
-.batch-row-inputs input[type="number"] {
+/* ✅ FIX: the value input is type="text" in your JS, so style it too */
+.batch-row-inputs input[type="number"],
+.batch-row-inputs input[type="text"],
+.batch-row-inputs input.batch-value-input {
   width: 90px;
   padding: 4px 6px;
   border-radius: 8px;
   border: 1px solid #cccccc;
   font-size: 0.8rem;
+  background: #ffffff;
+  color: #000000;
 }
 
-.batch-row-inputs input[type="number"]:focus {
+.batch-row-inputs input[type="number"]:focus,
+.batch-row-inputs input[type="text"]:focus,
+.batch-row-inputs input.batch-value-input:focus {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }

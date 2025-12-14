@@ -740,39 +740,33 @@ app.delete("/api/users/:id", requireAuth, async (req, res, next) => {
 });
 
 // ----- Batch measurements API -----
-// Verwacht: { year: 2025, month: 9, entries: [...] }
 // Slaat op met date = eerste dag van die maand (UTC): 2025-09-01T00:00:00.000Z
 app.post("/api/measurements/batch", requireAuth, async (req, res, next) => {
   try {
-    // year/month negeren: we gebruiken altijd "nu"
-    const { entries } = req.body;
+    const { year, month, entries } = req.body;
 
     if (!Array.isArray(entries)) {
       return res.status(400).json({ error: "Invalid payload: entries must be an array." });
     }
 
-    // Altijd huidige maand/jaar (server tijd)
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth() + 1; // 1-12
+    const y = Number(year);
+    const m = Number(month);
+
+    if (!Number.isFinite(y) || y < 2000 || y > 2100 || !Number.isFinite(m) || m < 1 || m > 12) {
+      return res.status(400).json({ error: "Invalid payload: year/month required." });
+    }
 
     const db = await getDb();
     const collection = db.collection("Data");
 
-    // Period date = first day of the CURRENT month (UTC midnight)
+    // Period date = first day of the selected month (UTC midnight)
     const measurementDate = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0));
 
     const bulkOps = [];
 
-    // Zelfde regel als in beheer.js:
-    // per entry: óf een value (µg/m³), óf noMeasurement = true,
-    // maar niet beide en niet allebei leeg.
     for (const [index, entry] of entries.entries()) {
       const pointId = entry.pointId;
-      if (!pointId || !ObjectId.isValid(pointId)) {
-        // Ongeldig pointId → sla deze entry over
-        continue;
-      }
+      if (!pointId || !ObjectId.isValid(pointId)) continue;
 
       const rawValueString =
         entry.value === null || entry.value === undefined
@@ -782,20 +776,16 @@ app.post("/api/measurements/batch", requireAuth, async (req, res, next) => {
       const hasValue = rawValueString !== "";
       const hasNoMeasurement = !!entry.noMeasurement;
 
-      // Niets ingevuld → request afkeuren
       if (!hasValue && !hasNoMeasurement) {
         return res.status(400).json({
-          error:
-            "Each measurement must either have a value or be marked as 'no measurement'.",
+          error: "Each measurement must either have a value or be marked as 'no measurement'.",
           index,
         });
       }
 
-      // Beide ingevuld → ook afkeuren
       if (hasValue && hasNoMeasurement) {
         return res.status(400).json({
-          error:
-            "A measurement cannot have both a numeric value and 'no measurement' at the same time.",
+          error: "A measurement cannot have both a numeric value and 'no measurement' at the same time.",
           index,
         });
       }
@@ -806,7 +796,6 @@ app.post("/api/measurements/batch", requireAuth, async (req, res, next) => {
         const cleaned = rawValueString.replace(",", ".");
         const num = Number(cleaned);
 
-        // alleen range toestaan
         if (!Number.isFinite(num) || num < MEASUREMENT_MIN || num > MEASUREMENT_MAX) {
           return res.status(400).json({
             error: `Measurement values must be between ${MEASUREMENT_MIN} and ${MEASUREMENT_MAX} (µg/m³).`,
@@ -818,11 +807,8 @@ app.post("/api/measurements/batch", requireAuth, async (req, res, next) => {
       }
 
       const measurementDoc = { date: measurementDate };
-      if (hasNoMeasurement) {
-        measurementDoc.noMeasurement = true;
-      } else {
-        measurementDoc.value = value;
-      }
+      if (hasNoMeasurement) measurementDoc.noMeasurement = true;
+      else measurementDoc.value = value;
 
       bulkOps.push({
         updateOne: {
@@ -838,7 +824,6 @@ app.post("/api/measurements/batch", requireAuth, async (req, res, next) => {
 
     const result = await collection.bulkWrite(bulkOps);
 
-    // handig voor debugging: geef terug voor welke periode is opgeslagen
     res.json({
       success: true,
       modifiedCount: result.modifiedCount,
@@ -970,27 +955,6 @@ app.post("/loginVerification", verifyCodeLimiter, async (req, res, next) => {
     next(err);
   }
 });
-
-// ----- Route handlers -----
-// async function toonIndex(req, res, next) {
-//   try {
-//     const db = await getDb();
-//     const collection = db.collection("Data");
-//     const data = await collection.find({}).toArray();
-//     res.json(data);
-//   } catch (err) {
-//     console.error(err);
-//     next(err);
-//   }
-//   try {
-//     res.render("pages/index", {
-//       keuzes: keuzes || [],
-//       initialPoints: data || []
-//     });
-//   } catch (err) {
-//     next(err);
-//   }
-// }
 
 async function toonIndex(req, res, next) {
   try {
