@@ -547,7 +547,7 @@ function setupBatchForm(points) {
       });
 
       const data = await res.json();
-      if (!res.ok || !data.success) {
+      if (!res.ok) {
         throw new Error(data.error || "Failed to save measurements.");
       }
 

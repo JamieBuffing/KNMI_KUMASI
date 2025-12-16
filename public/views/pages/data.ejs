@@ -80,7 +80,7 @@ GET <span class="api-url" data-path="/api/public/data?apiKey=YOUR_KEY"></span>
             <li><span class="code-pill">limit</span> – items per page (default: 50, max: 200)</li>
         </ul>
         <pre class="code-block">
-GET <span class="api-url" data-path="/api/public/data?page=2&limit=5"></span>
+GET <span class="api-url" data-path="/api/public/data?apiKey=YOUR_KEY&page=2&limit=5"></span>
         </pre>
 
         <h3>Filtering by activity status</h3>
@@ -93,7 +93,7 @@ GET <span class="api-url" data-path="/api/public/data?page=2&limit=5"></span>
             <li><span class="code-pill">active=all</span> – all points (default)</li>
         </ul>
         <pre class="code-block">
-GET <span class="api-url" data-path="/api/public/data?active=true"></span>
+GET <span class="api-url" data-path="/api/public/data?apiKey=YOUR_KEY&active=true"></span>
         </pre>
 
         <h3>Filtering by point number</h3>
@@ -106,10 +106,10 @@ GET <span class="api-url" data-path="/api/public/data?active=true"></span>
             <li><span class="code-pill">pointMax</span> – maximum point number</li>
         </ul>
         <pre class="code-block">
-GET <span class="api-url" data-path="/api/public/data?point=14"></span>
+GET <span class="api-url" data-path="/api/public/data?apiKey=YOUR_KEY&point=14"></span>
         </pre>
         <pre class="code-block">
-GET <span class="api-url" data-path="/api/public/data?pointMin=5&pointMax=10"></span>
+GET <span class="api-url" data-path="/api/public/data?apiKey=YOUR_KEY&pointMin=5&pointMax=10"></span>
         </pre>
 
         <h3>Including measurements</h3>
@@ -117,7 +117,7 @@ GET <span class="api-url" data-path="/api/public/data?pointMin=5&pointMax=10"></
             By default, measurement data is not included.
         </p>
         <pre class="code-block">
-GET <span class="api-url" data-path="/api/public/data?includeMeasurements=true"></span>
+GET <span class="api-url" data-path="/api/public/data?apiKey=YOUR_KEY&includeMeasurements=true"></span>
         </pre>
 
         <h3>Filtering measurements by month</h3>
@@ -129,7 +129,7 @@ GET <span class="api-url" data-path="/api/public/data?includeMeasurements=true">
             <li><span class="code-pill">mTo</span> – end month</li>
         </ul>
         <pre class="code-block">
-GET <span class="api-url" data-path="/api/public/data?includeMeasurements=true&mFrom=2025-11&mTo=2025-11"></span>
+GET <span class="api-url" data-path="/api/public/data?apiKey=YOUR_KEY&includeMeasurements=true&mFrom=2025-11&mTo=2025-11"></span>
         </pre>
 
         <h3>Latest measurement only</h3>
@@ -137,7 +137,7 @@ GET <span class="api-url" data-path="/api/public/data?includeMeasurements=true&m
             Return only the most recent measurement per point.
         </p>
         <pre class="code-block">
-GET <span class="api-url" data-path="/api/public/data?includeMeasurements=true&latestOnly=true"></span>
+GET <span class="api-url" data-path="/api/public/data?apiKey=YOUR_KEY&includeMeasurements=true&latestOnly=true"></span>
         </pre>
 
         <h3>Limit measurements per point</h3>
@@ -148,7 +148,7 @@ GET <span class="api-url" data-path="/api/public/data?includeMeasurements=true&l
             <li><span class="code-pill">mLimit</span> – max measurements per point (default: 24)</li>
         </ul>
         <pre class="code-block">
-GET <span class="api-url" data-path="/api/public/data?includeMeasurements=true&mLimit=6"></span>
+GET <span class="api-url" data-path="/api/public/data?apiKey=YOUR_KEY&includeMeasurements=true&mLimit=6"></span>
         </pre>
 
     </section>
