@@ -182,6 +182,14 @@ router.post("/measurements/batch", async (req, res, next) => {
       const pointId = entry.pointId;
       if (!pointId || !ObjectId.isValid(pointId)) continue;
 
+      const tubeId = entry.tube_id === null || entry.tube_id === undefined ? "" : String(entry.tube_id).trim();
+      if (!tubeId) {
+        return res.status(400).json({
+          error: "tube_id is required for each measurement.",
+          index,
+        });
+      }
+
       const rawValueString =
         entry.value === null || entry.value === undefined ? "" : String(entry.value).trim();
 
@@ -218,7 +226,8 @@ router.post("/measurements/batch", async (req, res, next) => {
         value = num;
       }
 
-      const measurementDoc = { date: measurementDate };
+      // ✅ tube_id opslaan op measurement
+      const measurementDoc = { date: measurementDate, tube_id: tubeId };
       if (hasNoMeasurement) measurementDoc.noMeasurement = true;
       else measurementDoc.value = value;
 

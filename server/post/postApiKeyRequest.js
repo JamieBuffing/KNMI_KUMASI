@@ -12,7 +12,7 @@ module.exports = async function postApiKeyRequest(req, res, next) {
 
     const emailLower = emailRaw.toLowerCase();
 
-    const code = generateCode();
+    const { plain, hash } = await generateCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await apiCol.updateOne(
@@ -21,7 +21,7 @@ module.exports = async function postApiKeyRequest(req, res, next) {
         $set: {
           email: emailRaw,
           emailLower,
-          "verify.code": code,
+          "verify.code": hash,
           "verify.expiresAt": expiresAt,
         },
         $setOnInsert: {
@@ -44,7 +44,7 @@ module.exports = async function postApiKeyRequest(req, res, next) {
       to: emailLower,
       subject: "Bevestig je email voor je API key",
       html: `
-        <p>Je verificatiecode is: <strong>${code}</strong></p>
+        <p>Je verificatiecode is: <strong>${plain}</strong></p>
         <p>Deze code is 10 minuten geldig.</p>
         <p>Vul deze code in om je API key te ontvangen.</p>
       `,

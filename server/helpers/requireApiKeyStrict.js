@@ -83,14 +83,19 @@ async function requireApiKeyStrict(req, res, next) {
 
     await apiCol.updateOne(
       { _id: record._id },
-      { $set: { rate, lastCallAt: now, lastCall } }
+      {
+        $set: { rate, lastCallAt: now, lastCall },
+        $inc: { totalCalls: 1 },
+      }
     );
 
     req.apiClient = {
       _id: record._id,
       emailLower: record.emailLower,
       apiKey: record.apiKey,
+      totalCalls: (record.totalCalls || 0) + 1,
     };
+
 
     return next();
   } catch (err) {

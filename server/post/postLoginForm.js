@@ -16,18 +16,18 @@ module.exports = async function postLoginForm(req, res, next) {
 
     if (!user) {
       return res.render("pages/login", {
-        error: "If this email address exists in our system, we have sent you a login code.",
+        error: "We have sent you a login link and code.",
       });
     }
 
-    const code = generateCode();
+    const { plain, hash } = await generateCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     const loginCodesCollection = db.collection("LoginCodes");
     await loginCodesCollection.deleteMany({ email: user.email });
     await loginCodesCollection.insertOne({
       email: user.email,
-      code,
+      code: hash,
       expiresAt,
       userId: user._id.toString(),
       used: false,
@@ -42,7 +42,7 @@ module.exports = async function postLoginForm(req, res, next) {
       to: user.email,
       subject: "Je login code",
       html: `
-        <p>Je login code is: <strong>${code}</strong></p>
+        <p>Je login code is: <strong>${plain}</strong></p>
         <p>Deze code is 10 minuten geldig.</p>
       `,
     });

@@ -25,6 +25,45 @@ function normalizeValue(inputString) {
   return num;
 }
 
+
+function getLastMeasurementValue(point) {
+  const measurements = Array.isArray(point && point.measurements) ? point.measurements : [];
+  if (!measurements.length) return null;
+
+  const sorted = measurements
+    .slice()
+    .map((m) => ({ m, d: new Date(m && m.date) }))
+    .filter((x) => !Number.isNaN(x.d.getTime()))
+    .sort((a, b) => b.d - a.d);
+
+  for (const { m } of sorted) {
+    const v = m && typeof m.value === "number" ? m.value : null;
+    if (Number.isFinite(v)) return v;
+  }
+  return null;
+}
+
+function getLastTubeId(point) {
+  const measurements = Array.isArray(point && point.measurements) ? point.measurements : [];
+  if (!measurements.length) return "";
+
+  const sorted = measurements
+    .slice()
+    .map((m) => ({ m, d: new Date(m && m.date) }))
+    .filter((x) => !Number.isNaN(x.d.getTime()))
+    .sort((a, b) => b.d - a.d);
+
+  for (const { m } of sorted) {
+    const t = (m && (m.tube_id || m.tubeId)) ? String(m.tube_id || m.tubeId).trim() : "";
+    if (t) return t;
+  }
+  return "";
+}
+
+function formatPlaceholderNumber(num) {
+  return String(num).replace(".", ",");
+}
+
 function computeStats(points) {
   let totalMeasurements = 0;
   let minDate = null;
@@ -119,6 +158,7 @@ function renderPointsTable(points) {
     const coords = (p && p.coordinates) || {};
     const lat = typeof coords.lat === "number" ? coords.lat.toFixed(4) : "–";
     const lon = typeof coords.lon === "number" ? coords.lon.toFixed(4) : "–";
+    const city = (p && p.city) ? p.city : "–";
 
     const id = (p && p._id && (p._id.$oid || p._id)) || "";
     const isActive = !p || p.active !== false; // default: active
@@ -135,6 +175,7 @@ function renderPointsTable(points) {
     tr.innerHTML = `
       <td data-label="Name">${name}</td>
       <td data-label="Coordinates">Lat: ${lat}<br>Lon: ${lon}</td>
+      <td data-label="City">${city}</td>
       <td data-label="Number of measurements">${measurements.length}</td>
       <td data-label="First date">${firstDate ? firstDate.toISOString().slice(0, 10) : "–"}</td>
       <td data-label="Last date">${lastDate ? lastDate.toISOString().slice(0, 10) : "–"}</td>
@@ -412,16 +453,30 @@ function renderBatchRows(points) {
 
     row.dataset.pointId = id;
 
+    const lastVal = getLastMeasurementValue(p);
+    const valuePlaceholder = lastVal === null ? "e.g. 25,5" : formatPlaceholderNumber(lastVal);
+    const lastTube = getLastTubeId(p);
+    const tubePlaceholder = lastTube ? lastTube : "e.g. B1";
+
     row.innerHTML = `
       <div class="batch-row-name">${name}</div>
       <div class="batch-row-inputs">
+        <label>
+          <span>Tube ID</span>
+          <input
+            type="text"
+            class="batch-tube-id-input"
+            placeholder="${tubePlaceholder}"
+            value="${lastTube ? lastTube : ""}"
+          />
+        </label>
         <label>
           <span>Value (µg/m³)</span>
           <input
             type="text"
             class="batch-value-input"
             inputmode="decimal"
-            placeholder="e.g. 25,5"
+            placeholder="${valuePlaceholder}"
           />
         </label>
         <label class="batch-no-measurement">
@@ -431,8 +486,9 @@ function renderBatchRows(points) {
       </div>
     `;
 
-    const valueInput = row.querySelector(".batch-value-input");
-    const noCheckbox = row.querySelector(".batch-no-measurement-checkbox");
+    const tubeInput = row.querySelector(".batch-tube-id-input");
+      const valueInput = row.querySelector(".batch-value-input");
+      const noCheckbox = row.querySelector(".batch-no-measurement-checkbox");
 
     noCheckbox.addEventListener("change", () => {
       valueInput.disabled = noCheckbox.checked;
@@ -479,11 +535,20 @@ function setupBatchForm(points) {
       const valueInput = row.querySelector(".batch-value-input");
       const noCheckbox = row.querySelector(".batch-no-measurement-checkbox");
 
+      const tubeId = (tubeInput && tubeInput.value ? tubeInput.value : "").trim();
+
       const rawValue = (valueInput.value || "").trim();
       const noMeasurement = !!noCheckbox.checked;
 
       // reset eventuele oude error-styling
       row.classList.remove("batch-row-error");
+
+      // Regel: tube_id is verplicht
+      if (!tubeId) {
+        hasRowError = true;
+        row.classList.add("batch-row-error");
+        return;
+      }
 
       // Regel: bij elk meetpunt óf een waarde, óf "no measurement"
       if (!rawValue && !noMeasurement) {
@@ -519,13 +584,14 @@ function setupBatchForm(points) {
         pointId,
         value: numericValue,
         noMeasurement,
+        tube_id: tubeId,
       });
     });
 
     if (hasRowError) {
       if (statusEl) {
         statusEl.textContent =
-          `Vul bij elk meetpunt een waarde in (${MEASUREMENT_MIN}–${MEASUREMENT_MAX} µg/m³) of vink 'No measurement possible' aan.`;
+          `Vul bij elk meetpunt een tube ID in én een waarde in (${MEASUREMENT_MIN}–${MEASUREMENT_MAX} µg/m³) of vink 'No measurement possible' aan.`;
       }
       return;
     }

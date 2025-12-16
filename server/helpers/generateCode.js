@@ -1,20 +1,14 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcryptjs");
 
 async function generateCode() {
-  const codeBase = String(Math.floor(100000 + Math.random() * 900000));
-  const code = await hashData(codeBase);
-  return code;
+  const plain = String(Math.floor(100000 + Math.random() * 900000));
+  const hash = await hashData(plain);
+  return { plain, hash };
 }
 
 async function hashData(data) {
-  try {
-    const salt = await bcrypt.genSalt(10);
-    const hashedData = await bcrypt.hash(data, salt);
-    return hashedData;
-  } catch (error) {
-    console.error("Error hashing data:", error);
-    throw error;
-  }
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(data, salt);
 }
 
 module.exports = generateCode;

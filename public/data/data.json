@@ -1,262 +1,1215 @@
-{
-  "meetpunt_1": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.64 },
-        { "datum": "2025-02-01", "waarde": 0.03 },
-        { "datum": "2025-03-01", "waarde": 0.28 }
-      ],
-      "coordinaten": { "lat": 6.6950, "lon": -1.6163 },
-      "beschrijving": "Kejetia Market (Central Market)",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_2": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.82 },
-        { "datum": "2025-02-01", "waarde": 0.14 },
-        { "datum": "2025-03-01", "waarde": 0.49 }
-      ],
-      "coordinaten": { "lat": 6.7078, "lon": -1.6308 },
-      "beschrijving": "Manhyia Palace Museum",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_3": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.11 },
-        { "datum": "2025-02-01", "waarde": 0.81 },
-        { "datum": "2025-03-01", "waarde": 0.52 },
-        { "datum": "2024-04-01", "waarde": 0.63 }
-      ],
-      "coordinaten": { "lat": 6.6731, "lon": -1.5654 },
-      "beschrijving": "KNUST Main Gate",
-      "startdatum": "2024-04-01"
-    }
-  ],
-
-  "meetpunt_4": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.64 },
-        { "datum": "2025-02-01", "waarde": 0.22 },
-        { "datum": "2025-03-01", "waarde": 0.93 }
-      ],
-      "coordinaten": { "lat": 6.6704, "lon": -1.5604 },
-      "beschrijving": "KNUST Botanical Garden",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_5": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.29 },
-        { "datum": "2025-02-01", "waarde": 0.77 },
-        { "datum": "2025-03-01", "waarde": 0.12 }
-      ],
-      "coordinaten": { "lat": 6.6884, "lon": -1.5996 },
-      "beschrijving": "Baba Yara Sports Stadium",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_6": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.93 },
-        { "datum": "2025-02-01", "waarde": 0.11 },
-        { "datum": "2025-03-01", "waarde": 0.44 }
-      ],
-      "coordinaten": { "lat": 6.6936, "lon": -1.6232 },
-      "beschrijving": "Kumasi Zoological Gardens",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_7": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.45 },
-        { "datum": "2025-02-01", "waarde": 0.12 },
-        { "datum": "2025-03-01", "waarde": 0.67 }
-      ],
-      "coordinaten": { "lat": 6.6946, "lon": -1.6278 },
-      "beschrijving": "Okomfo Anokye Sword Site",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_8": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.58 },
-        { "datum": "2025-02-01", "waarde": 0.22 },
-        { "datum": "2025-03-01", "waarde": 0.47 }
-      ],
-      "coordinaten": { "lat": 6.6833, "lon": -1.6190 },
-      "beschrijving": "Rattray Park",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_9": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.74 },
-        { "datum": "2025-02-01", "waarde": 0.31 },
-        { "datum": "2025-03-01", "waarde": 0.52 }
-      ],
-      "coordinaten": { "lat": 6.6930, "lon": -1.6207 },
-      "beschrijving": "Prempeh II Jubilee Museum",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_10": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.06 },
-        { "datum": "2025-02-01", "waarde": 0.87 },
-        { "datum": "2025-03-01", "waarde": 0.14 }
-      ],
-      "coordinaten": { "lat": 6.7055, "lon": -1.5915 },
-      "beschrijving": "Krofrom Brassworking Area",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_11": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.51 },
-        { "datum": "2025-02-01", "waarde": 0.13 },
-        { "datum": "2025-03-01", "waarde": 0.94 }
-      ],
-      "coordinaten": { "lat": 6.6827, "lon": -1.6167 },
-      "beschrijving": "Asafo Interchange",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_12": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.97 },
-        { "datum": "2025-02-01", "waarde": 0.51 },
-        { "datum": "2025-03-01", "waarde": 0.12 }
-      ],
-      "coordinaten": { "lat": 6.7131, "lon": -1.6012 },
-      "beschrijving": "Aboabo Market",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_13": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.23 },
-        { "datum": "2025-02-01", "waarde": 0.11 },
-        { "datum": "2025-03-01", "waarde": 0.88 }
-      ],
-      "coordinaten": { "lat": 6.6662, "lon": -1.6088 },
-      "beschrijving": "Ahodwo Roundabout",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_14": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.79 },
-        { "datum": "2025-02-01", "waarde": 0.22 },
-        { "datum": "2025-03-01", "waarde": 0.58 }
-      ],
-      "coordinaten": { "lat": 6.6916, "lon": -1.6239 },
-      "beschrijving": "Adum Business District",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_15": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.14 },
-        { "datum": "2025-02-01", "waarde": 0.65 },
-        { "datum": "2025-03-01", "waarde": 0.31 }
-      ],
-      "coordinaten": { "lat": 6.6664, "lon": -1.6037 },
-      "beschrijving": "Kumasi City Mall",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_16": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.40 },
-        { "datum": "2025-02-01", "waarde": 0.81 },
-        { "datum": "2025-03-01", "waarde": 0.55 }
-      ],
-      "coordinaten": { "lat": 6.6904, "lon": -1.6248 },
-      "beschrijving": "Kumasi Fort / Military Museum",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_17": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.69 },
-        { "datum": "2025-02-01", "waarde": 0.27 },
-        { "datum": "2025-03-01", "waarde": 0.51 }
-      ],
-      "coordinaten": { "lat": 6.6743, "lon": -1.6743 },
-      "beschrijving": "Santasi Roundabout",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_18": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.09 },
-        { "datum": "2025-02-01", "waarde": 0.57 },
-        { "datum": "2025-03-01", "waarde": 0.15 }
-      ],
-      "coordinaten": { "lat": 6.6788, "lon": -1.5669 },
-      "beschrijving": "KNUST College of Engineering",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_19": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.55 },
-        { "datum": "2025-02-01", "waarde": 0.84 },
-        { "datum": "2025-03-01", "waarde": 0.27 }
-      ],
-      "coordinaten": { "lat": 6.5000, "lon": -1.4160 },
-      "beschrijving": "Lake Bosomtwe (Abono Tourist Point)",
-      "startdatum": "2025-01-01"
-    }
-  ],
-
-  "meetpunt_20": [
-    {
-      "metingen": [
-        { "datum": "2025-01-01", "waarde": 0.31 },
-        { "datum": "2025-02-01", "waarde": 0.72 },
-        { "datum": "2025-03-01", "waarde": 0.18 }
-      ],
-      "coordinaten": { "lat": 6.6957, "lon": -1.6272 },
-      "beschrijving": "Komfo Anokye Teaching Hospital (KATH)",
-      "startdatum": "2025-01-01"
-    }
-  ]
-}
+[
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562ed"
+    },
+    "point_number": 1,
+    "location": "Casley Hayfort T-junction",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.674729362036358,
+      "lon": -1.56742967240966
+    },
+    "description": "busy junction on campus with bus stops where KNUST shuttle stops",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 8.74,
+        "tube_id": "B1"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B1"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B1"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 14.64,
+        "tube_id": "B1"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 14.54,
+        "tube_id": "B1"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 12.54,
+        "tube_id": "B1"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562ee"
+    },
+    "point_number": 2,
+    "location": "Kotei Road Junction (Ayeduase)",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.675848640531346,
+      "lon": -1.55883462461313
+    },
+    "description": "busy junction on a small road close to campus, with little sidewalk shops around",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 43.04,
+        "tube_id": "B2"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B2"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B2"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 43.19,
+        "tube_id": "B2"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 49.93,
+        "tube_id": "B2"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 34.87,
+        "tube_id": "B2"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562ef"
+    },
+    "point_number": 3,
+    "location": "Tech Junction (KNUST hospital side)",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.686750836300407,
+      "lon": -1.57425109509263
+    },
+    "description": "very busy place with busy road coming from Accra, one of the main junctions in the city",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 31.61,
+        "tube_id": "B5"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B5"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B5"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 28,
+        "tube_id": "B5"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 30.29,
+        "tube_id": "B5"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 26.1,
+        "tube_id": "B5"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562f0"
+    },
+    "point_number": 4,
+    "location": "Krank High Business (industrial) Olam",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.648674708608772,
+      "lon": -1.60946407890108
+    },
+    "description": "In the corner outside the factory, a bit busy mainly with trucks and waste collectors",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 40.09,
+        "tube_id": "B20"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B20"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B20"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 29.11,
+        "tube_id": "B20"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 36.06,
+        "tube_id": "B20"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 24.87,
+        "tube_id": "B20"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562f1"
+    },
+    "point_number": 5,
+    "location": "Guinness (industrial)",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.651276039172921,
+      "lon": -1.60650193101268
+    },
+    "description": "Next to the entrance to the Guinness factory, on the other side of plastic bottles waste collection",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 33.51,
+        "tube_id": "B19"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B19"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B19"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 46.48,
+        "tube_id": "B19"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 54.15,
+        "tube_id": "B19"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 27.48,
+        "tube_id": "B19"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562f2"
+    },
+    "point_number": 6,
+    "location": "Kumasi City Mall roundabout",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.671692306260219,
+      "lon": -1.60557066883367
+    },
+    "description": "In the turn to enter the mall car parking, semibusy area",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 49.31,
+        "tube_id": "B18"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B18"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B18"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 40.87,
+        "tube_id": "B18"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 41.84,
+        "tube_id": "B18"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 34.29,
+        "tube_id": "B18"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562f3"
+    },
+    "point_number": 7,
+    "location": "Asafo Market",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.689359395727744,
+      "lon": -1.61513109477032
+    },
+    "description": "important junction along accra road",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 50.49,
+        "tube_id": "B7"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B7"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B7"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 38.24,
+        "tube_id": "B7"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 47.12,
+        "tube_id": "B7"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 35.72,
+        "tube_id": "B7"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562f4"
+    },
+    "point_number": 8,
+    "location": "Kejetia market roundabout",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.697341479894149,
+      "lon": -1.62196182619635
+    },
+    "description": "very busy place with the biggest market in west africa next to it",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 42.17,
+        "tube_id": "B8"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B8"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B8"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 61.84,
+        "tube_id": "B8"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 58.41,
+        "tube_id": "B8"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 32.63,
+        "tube_id": "B8"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562f5"
+    },
+    "point_number": 9,
+    "location": "Adum prison",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.694327287553556,
+      "lon": -1.62331379281024
+    },
+    "description": "semi-busy roundabout, ending of the market",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 43.68,
+        "tube_id": "B9"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B9"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B9"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 56.78,
+        "tube_id": "B9"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 35.67,
+        "tube_id": "B9"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562f6"
+    },
+    "point_number": 10,
+    "location": "Hospital KATH",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.6960206110273806,
+      "lon": -1.62760766503801
+    },
+    "description": "calmer area behind the hospital parking lot, emergency generator next to it",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 36.93,
+        "tube_id": "B10"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B10"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B10"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 31.27,
+        "tube_id": "B10"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 39.86,
+        "tube_id": "B10"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 23.35,
+        "tube_id": "B10"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562f7"
+    },
+    "point_number": 11,
+    "location": "Patasi roundabout (Santase)",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.672384565208845,
+      "lon": -1.64116601967437
+    },
+    "description": "Busy roundabout with one main road crossing, tubes inside the roundabout area, green roundabout",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 43.11,
+        "tube_id": "B16"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B16"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B16"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 40.18,
+        "tube_id": "B16"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 45.73,
+        "tube_id": "B16"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 28.86,
+        "tube_id": "B16"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562f8"
+    },
+    "point_number": 12,
+    "location": "Ahoydo roundabout (Ahodwo)",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.669285103471932,
+      "lon": -1.61757662721153
+    },
+    "description": "Tubes inside the roundabout area, green roundabout, connecting residential area, in front of gas station",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 62.95,
+        "tube_id": "B17"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B17"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B17"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 28.3,
+        "tube_id": "B17"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 45.61,
+        "tube_id": "B17"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 41.65,
+        "tube_id": "B17"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562f9"
+    },
+    "point_number": 13,
+    "location": "Sofoline interchange",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.699994100889616,
+      "lon": -1.65053380101772
+    },
+    "description": "In between the two directions of a highway",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 71.2,
+        "tube_id": "B15"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B15"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B15"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 70.35,
+        "tube_id": "B15"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 68.17,
+        "tube_id": "B15"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 62.15,
+        "tube_id": "B15"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562fa"
+    },
+    "point_number": 14,
+    "location": "Suame circle",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.711108270448729,
+      "lon": -1.62728657204809
+    },
+    "description": "Dusty roundabout, tubes in the side of the roundabout close to where trotros stop",
+    "start_date": {
+      "$date": "2025-08-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B14"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B14"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B14"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 47.71,
+        "tube_id": "B14"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 49.68,
+        "tube_id": "B14"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 36.27,
+        "tube_id": "B14"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562fb"
+    },
+    "point_number": 15,
+    "location": "Airport",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.708776598470786,
+      "lon": -1.59892772688207
+    },
+    "description": "Closest roundabout to the airport entrace, a river nearby, in the gas station area",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 27.98,
+        "tube_id": "B12"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B12"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B12"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 27.41,
+        "tube_id": "B12"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 36.11,
+        "tube_id": "B12"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 29.74,
+        "tube_id": "B12"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562fc"
+    },
+    "point_number": 16,
+    "location": "Kings Palace",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.704311432333219,
+      "lon": -1.61194365542468
+    },
+    "description": "Between the King's palace entrance and the roundabout , on the outer part of the garden, residential area",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 57.25,
+        "tube_id": "B13"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B13"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B13"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 29.27,
+        "tube_id": "B13"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 32.67,
+        "tube_id": "B13"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 8.05,
+        "tube_id": "B13"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562fd"
+    },
+    "point_number": 17,
+    "location": "Ashawase",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.698397851880187,
+      "lon": -1.5945499373784
+    },
+    "description": "In the sidewalk of a big two-directional road",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 53.18,
+        "tube_id": "B11"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B11"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B11"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 45.59,
+        "tube_id": "B11"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 51.2,
+        "tube_id": "B11"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 41.05,
+        "tube_id": "B11"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562fe"
+    },
+    "point_number": 18,
+    "location": "Accra road (Anloga Junction)",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.688519886252746,
+      "lon": -1.59605174508926
+    },
+    "description": "very high traffic, very busy junction in the main road from Kumasi to Accra",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 82.12,
+        "tube_id": "B6"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B6"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B6"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 65.35,
+        "tube_id": "B6"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 74.99,
+        "tube_id": "B6"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 63,
+        "tube_id": "B6"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e869562ff"
+    },
+    "point_number": 19,
+    "location": "Asokwa (KNUST Main entrance)",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.685045395196162,
+      "lon": -1.57063619468839
+    },
+    "description": "main entrance for cars to the campus, roundabout",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 27.08,
+        "tube_id": "B4"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B4"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B4"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 22.51,
+        "tube_id": "B4"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 23.15,
+        "tube_id": "B4"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 19.86,
+        "tube_id": "B4"
+      }
+    ],
+    "active": true
+  },
+  {
+    "_id": {
+      "$oid": "693c1b73bfdf0b4e86956300"
+    },
+    "point_number": 20,
+    "location": "Engineering guest house",
+    "city": "Kumasi",
+    "coordinates": {
+      "lat": 6.670178304791533,
+      "lon": -1.57951997900374
+    },
+    "description": "end of a quiet road on Campus, surrounded by a forest",
+    "start_date": {
+      "$date": "2025-05-01T00:00:00.000Z"
+    },
+    "measurements": [
+      {
+        "date": {
+          "$date": "2025-05-01T00:00:00.000Z"
+        },
+        "value": 9.14,
+        "tube_id": "B3"
+      },
+      {
+        "date": {
+          "$date": "2025-06-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B3"
+      },
+      {
+        "date": {
+          "$date": "2025-07-01T00:00:00.000Z"
+        },
+        "noMeasurement": true,
+        "tube_id": "B3"
+      },
+      {
+        "date": {
+          "$date": "2025-08-01T00:00:00.000Z"
+        },
+        "value": 11.13,
+        "tube_id": "B3"
+      },
+      {
+        "date": {
+          "$date": "2025-09-01T00:00:00.000Z"
+        },
+        "value": 14.4,
+        "tube_id": "B3"
+      },
+      {
+        "date": {
+          "$date": "2025-10-01T00:00:00.000Z"
+        },
+        "value": 9.64,
+        "tube_id": "B3"
+      }
+    ],
+    "active": true
+  }
+]
