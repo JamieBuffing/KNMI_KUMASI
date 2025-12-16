@@ -1,3 +1,4 @@
+const bcrypt = require("bcryptjs");
 const getDb = require("../db/getDb");
 const generateApiKey = require("../helpers/generateApiKey");
 const getResendClient = require("../services/resend");
@@ -15,13 +16,13 @@ module.exports = async function postApiKeyVerify(req, res, next) {
 
     const record = await apiCol.findOne({ emailLower });
 
-    if (
-      !record ||
-      !record.verify ||
-      record.verify.code !== code ||
-      !record.verify.expiresAt ||
-      record.verify.expiresAt < new Date()
-    ) {
+    if (!record || !record.verify || !record.verify.expiresAt || record.verify.expiresAt < new Date()) {
+      return res.render("pages/apiKeyVerify", { error: "Ongeldige of verlopen code." });
+    }
+
+    // record.verify.code moet de bcrypt-hash zijn
+    const ok = await bcrypt.compare(code, record.verify.code);
+    if (!ok) {
       return res.render("pages/apiKeyVerify", { error: "Ongeldige of verlopen code." });
     }
 

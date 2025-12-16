@@ -146,7 +146,8 @@ function createUiLogin() {
 
     const items = [
       { href: "/login", text: "Login" },
-      { href: "/data", text: "Data" }
+      { href: "/data", text: "Share data" },
+      { href: "/about", text: "About us"}
     ];
 
     items.forEach(item => {

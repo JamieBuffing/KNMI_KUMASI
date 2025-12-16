@@ -22,6 +22,7 @@ const apiKeyVerifyLimiter = require("./server/helpers/limiters/apiKeyVerifyLimit
 // -------------------- GET handlers --------------------
 const getIndex = require("./server/appGet/getIndex");
 const getData = require("./server/appGet/getData");
+const getAbout = require("./server/appGet/getAbout");
 const getLogin = require("./server/appGet/getLogin");
 const getLoginVerification = require("./server/appGet/getLoginVerification");
 const getBeheer = require("./server/appGet/getBeheer");
@@ -84,6 +85,7 @@ app.use(
 // -------------------- Pages --------------------
 app.get("/", getIndex);
 app.get("/data", getData);
+app.get("/about", getAbout);
 
 app.get("/login", getLogin);
 app.post("/loginform", loginLimiter, postLoginForm);
