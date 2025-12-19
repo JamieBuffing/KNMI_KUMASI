@@ -20,23 +20,63 @@ const MONTH_NAMES = [
 // ✅ FIX: popup pane name (so popups can be above Leaflet controls)
 const POPUP_PANE_TOP = "popupTop";
 
-// ---- Units + WHO thresholds (NO2) ----
-// WHO AQG 2021 for NO2: annual 10 µg/m³, 24-hour 25 µg/m³
+// ---- Units + thresholds (NO2) ----
+// Your measurements are monthly averages (e.g. Palmes tubes) in µg/m³.
 const VALUE_SUFFIX = " µg/m³";
-const WHO = {
-  annual: 10,
-  daily: 25
+
+// Presets are visualization anchors for monthly means.
+// - annual: reference point (annual guideline/limit; used here as a monthly context anchor)
+// - high:   "high" monthly anchor (used for context labels)
+// - colorMax: value where the color becomes fully red (values above are clamped)
+const SCALE_PRESETS = {
+  WHO:  { key: "WHO",  label: "WHO",  annual: 10,  high: 25,  colorMax: 50 },
+  EU:   { key: "EU",   label: "EU",   annual: 40,  high: 60,  colorMax: 80 },
+  US:   { key: "US",   label: "US",   annual: 100, high: 120, colorMax: 150 },
+  DATA: { key: "DATA", label: "Data", annual: null, high: null, colorMax: null }
 };
 
-// How to scale colors (0..1). Everything above COLOR_MAX becomes "max red".
-const COLOR_MAX = WHO.daily * 2; // adjust if you want
+const SCALE_STORAGE_KEY = "no2ScalePreset";
+
+// Active scale (default WHO; may be overwritten at init)
+let activeScale = { ...SCALE_PRESETS.WHO };
 
 function clamp01(x) {
   return Math.max(0, Math.min(1, x));
 }
 
+function setScalePreset(key) {
+  const preset = SCALE_PRESETS[key];
+  if (!preset) return;
+
+  // If DATA preset isn't computed yet, ignore.
+  if (preset.key === "DATA" && (preset.colorMax == null || preset.annual == null || preset.high == null)) {
+    return;
+  }
+
+  activeScale = { ...preset };
+
+  try {
+    localStorage.setItem(SCALE_STORAGE_KEY, activeScale.key);
+  } catch (_) {
+    // ignore storage errors
+  }
+}
+
+function applyStoredScalePreset() {
+  try {
+    const stored = localStorage.getItem(SCALE_STORAGE_KEY);
+    if (stored && SCALE_PRESETS[stored]) {
+      // will ignore DATA if not ready
+      setScalePreset(stored);
+    }
+  } catch (_) {
+    // ignore
+  }
+}
+
 function normalizeForColor(value) {
-  return clamp01(value / COLOR_MAX);
+  const max = (typeof activeScale.colorMax === "number" && activeScale.colorMax > 0) ? activeScale.colorMax : 50;
+  return clamp01(value / max);
 }
 
 function getColor(m) {
@@ -57,10 +97,17 @@ function getColor(m) {
 }
 
 function getCategory(value) {
-  // Interpret as µg/m³
-  if (value <= WHO.annual) return `Meets WHO annual (${WHO.annual}${VALUE_SUFFIX})`;
-  if (value <= WHO.daily) return `Above annual, meets WHO 24h (${WHO.daily}${VALUE_SUFFIX})`;
-  return `Above WHO 24h (${WHO.daily}${VALUE_SUFFIX})`;
+  // Interpret as µg/m³ (monthly means)
+  const a = activeScale.annual;
+  const h = activeScale.high;
+
+  if (typeof a !== "number" || typeof h !== "number") {
+    return "Value context unavailable";
+  }
+
+  if (value <= a) return `≤ ${a}${VALUE_SUFFIX}`;
+  if (value <= h) return `> ${a}${VALUE_SUFFIX} and ≤ ${h}${VALUE_SUFFIX}`;
+  return `> ${h}${VALUE_SUFFIX}`;
 }
 
 // Get all years from measurement data (array of docs)
@@ -107,6 +154,47 @@ function buildAvailableMonthsByYear(points) {
   return out;
 }
 
+function percentile(sortedArr, p) {
+  // sortedArr: ascending, p: 0..1
+  if (!sortedArr.length) return null;
+  const idx = (sortedArr.length - 1) * p;
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sortedArr[lo];
+  const w = idx - lo;
+  return sortedArr[lo] * (1 - w) + sortedArr[hi] * w;
+}
+
+function computeDataScaleFromPoints(points) {
+  const vals = [];
+
+  points.forEach(pt => {
+    (pt.measurements || []).forEach(m => {
+      if (!m) return;
+      if (m.noMeasurement) return;
+      if (typeof m.value !== "number" || Number.isNaN(m.value)) return;
+      vals.push(m.value);
+    });
+  });
+
+  vals.sort((a, b) => a - b);
+  if (!vals.length) return null;
+
+  const p50 = percentile(vals, 0.50);
+  const p75 = percentile(vals, 0.75);
+  const p95 = percentile(vals, 0.95);
+
+  const round1 = (x) => Math.round(x * 10) / 10;
+
+  return {
+    key: "DATA",
+    label: "Data",
+    annual: round1(p50),
+    high: round1(p75),
+    colorMax: Math.max(1, round1(p95))
+  };
+}
+
 function updateMonthSliderForYear(year) {
   if (!monthSlider || !monthLabelEl) return;
 
@@ -145,9 +233,9 @@ function createUiLogin() {
     const menu = L.DomUtil.create("div", "menu-dropdown", container);
 
     const items = [
-      { href: "/login", text: "Login" },
+      { href: "/beheer", text: "Login" },
       { href: "/data", text: "Share data" },
-      { href: "/about", text: "About us"}
+      { href: "/about", text: "About us" }
     ];
 
     items.forEach(item => {
@@ -156,8 +244,97 @@ function createUiLogin() {
       a.textContent = item.text;
     });
 
+    // ---- Divider ----
+    const divider = L.DomUtil.create("div", "", menu);
+    divider.style.height = "1px";
+    divider.style.background = "rgba(0,0,0,0.12)";
+    divider.style.margin = "8px 0";
+
+    // ---- Scale preset buttons ----
+    const scaleTitle = L.DomUtil.create("div", "", menu);
+    scaleTitle.textContent = "Color scale";
+    scaleTitle.style.fontSize = "11px";
+    scaleTitle.style.fontWeight = "600";
+    scaleTitle.style.marginBottom = "6px";
+
+    const btnRow = L.DomUtil.create("div", "", menu);
+    btnRow.style.display = "flex";
+    btnRow.style.flexWrap = "wrap";
+    btnRow.style.gap = "6px";
+
+    const buttons = {};
+
+    function stylePresetButton(btn, isActive) {
+      btn.style.border = "1px solid #ccc";
+      btn.style.borderRadius = "4px";
+      btn.style.padding = "4px 8px";
+      btn.style.fontSize = "11px";
+      btn.style.cursor = "pointer";
+      btn.style.background = isActive ? "#007bff" : "#f8f9fa";
+      btn.style.color = isActive ? "#fff" : "#333";
+    }
+
+    let refreshPresetButtons = function () {
+      Object.keys(buttons).forEach(k => {
+        stylePresetButton(buttons[k], activeScale.key === k);
+      });
+
+      // Data button disabled if no computed preset
+      if (buttons.DATA) {
+        const ready = (SCALE_PRESETS.DATA && typeof SCALE_PRESETS.DATA.colorMax === "number");
+        buttons.DATA.disabled = !ready;
+        buttons.DATA.title = ready ? "" : "Not enough data to compute a scale";
+        buttons.DATA.style.opacity = ready ? "1" : "0.5";
+        buttons.DATA.style.cursor = ready ? "pointer" : "not-allowed";
+      }
+    };
+
+    [
+      { key: "WHO", label: "WHO" },
+      { key: "EU", label: "EU" },
+      { key: "US", label: "US" },
+      { key: "DATA", label: "Data" }
+    ].forEach(p => {
+      const b = L.DomUtil.create("button", "", btnRow);
+      b.type = "button";
+      b.textContent = p.label;
+      buttons[p.key] = b;
+
+      b.addEventListener("click", () => {
+        // Ignore DATA if not ready
+        if (p.key === "DATA" && (!SCALE_PRESETS.DATA || SCALE_PRESETS.DATA.colorMax == null)) return;
+
+        setScalePreset(p.key);
+        refreshPresetButtons();
+        updateMarkers();
+      });
+    });
+
+    // Small hint (optional)
+    const hint = L.DomUtil.create("div", "", menu);
+    hint.style.marginTop = "6px";
+    hint.style.fontSize = "10px";
+    hint.style.color = "#666";
+    hint.textContent = `Active: ${activeScale.label} (max red ≈ ${activeScale.colorMax}${VALUE_SUFFIX})`;
+
+    function refreshHint() {
+      hint.textContent = `Active: ${activeScale.label} (max red ≈ ${activeScale.colorMax}${VALUE_SUFFIX})`;
+    }
+
+    // Keep hint in sync whenever we refresh button styles
+    const _refresh = refreshPresetButtons;
+    refreshPresetButtons = function () {
+      _refresh();
+      refreshHint();
+    };
+
+    // init styles
+    refreshPresetButtons();
+
     button.addEventListener("click", () => {
       menu.classList.toggle("open");
+      // When opening, recompute visuals (in case DATA computed later)
+      if (menu.classList.contains("open")) refreshPresetButtons();
     });
 
     // close on click outside
@@ -572,7 +749,7 @@ function updateMarkers() {
             </div>
 
             <div style="font-size: 11px; color:#555; margin-bottom: 6px;">
-              <span style="font-size:10px; text-transform:uppercase; color:#888;">WHO context</span><br>
+              <span style="font-size:10px; text-transform:uppercase; color:#888;">${activeScale.label} context</span><br>
               <strong>${category}</strong>
             </div>
 
@@ -657,6 +834,15 @@ function updateMarkers() {
     const lon = p?.coordinates?.lon;
     return (typeof lat === "number" && !Number.isNaN(lat) && typeof lon === "number" && !Number.isNaN(lon));
   });
+
+  // Compute DATA preset from your actual monthly measurement values
+  const dataScale = computeDataScaleFromPoints(allPoints);
+  if (dataScale) {
+    SCALE_PRESETS.DATA = dataScale;
+  }
+
+  // Apply stored preset (if any) now that DATA may be available
+  applyStoredScalePreset();
 
   const years = extractAvailableYears(allPoints);
   availableMonthsByYear = buildAvailableMonthsByYear(allPoints);

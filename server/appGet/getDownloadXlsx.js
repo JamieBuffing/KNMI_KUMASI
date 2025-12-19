@@ -35,7 +35,6 @@ module.exports = async function getDownloadXlsx(req, res, next) {
 
     const wb = new ExcelJS.Workbook();
 
-    // 1 sheet: 1 rij per measurement (zoals CSV) → alles in één export, incl tube_id
     const ws = wb.addWorksheet("Export");
 
     const rows = [];
