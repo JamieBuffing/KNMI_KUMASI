@@ -1,41 +1,36 @@
-(function () {
+document.addEventListener("DOMContentLoaded", () => {
   const toggle = document.querySelector("[data-view-toggle]");
   if (!toggle) return;
 
-  const buttons = toggle.querySelectorAll("[data-view]");
-  const views = {
-    map: document.getElementById("map-view"),
-    table: document.getElementById("table-view")
-  };
-
-  let activeView = "map";
+  const buttons = Array.from(toggle.querySelectorAll("[data-view]"));
+  const mapView = document.getElementById("map-view");
+  const tableView = document.getElementById("table-view");
 
   function setView(view) {
-    if (!views[view]) return;
-
-    // buttons
+    // button active state
     buttons.forEach(btn => {
       btn.classList.toggle("is-active", btn.dataset.view === view);
     });
 
-    // views
-    Object.keys(views).forEach(key => {
-      views[key].classList.toggle("is-active", key === view);
-    });
+    // show/hide views (als aanwezig)
+    if (mapView && tableView) {
+      mapView.classList.toggle("is-active", view === "map");
+      tableView.classList.toggle("is-active", view === "table");
+    }
 
-    activeView = view;
-
-    // ⚠️ Leaflet fix: kaart hertekenen als hij weer zichtbaar wordt
-    if (view === "map" && window.map) {
-      setTimeout(() => {
-        window.map.invalidateSize();
-      }, 0);
+    // Leaflet resize fix
+    if (view === "map" && window.map?.invalidateSize) {
+      setTimeout(() => window.map.invalidateSize(), 0);
     }
   }
 
-  buttons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      setView(btn.dataset.view);
-    });
+  toggle.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-view]");
+    if (!btn) return;
+    setView(btn.dataset.view);
   });
-})();
+
+  // init
+  const initial = buttons.find(b => b.classList.contains("is-active"))?.dataset.view || "map";
+  setView(initial);
+});
