@@ -28,10 +28,65 @@ const VALUE_SUFFIX = " µg/m³";
 // - annual: reference point (annual guideline/limit; used here as a monthly context anchor)
 // - high:   "high" monthly anchor (used for context labels)
 // - colorMax: value where the color becomes fully red (values above are clamped)
+/**
+ * ============================
+ * NO₂ SCALE SOURCES & RATIONALE
+ * ============================
+ *
+ * Measurement context:
+ * - Values represent NO₂ concentrations in µg/m³
+ * - Interpreted as *monthly averages* derived from Palmes diffusion tube measurements
+ *   (passive sampling, typically 2–4 week exposure periods).
+ *
+ * WHY MONTHLY?
+ * - Palmes tubes do NOT measure hourly or daily peaks.
+ * - WHO/EU limit values are defined as annual means and short-term limits.
+ * - For map visualization, these limits are translated into *practical monthly reference levels*
+ *   rather than legal compliance thresholds.
+ *
+ * ----------------------------
+ * WHO (World Health Organization)
+ * ----------------------------
+ * Source:
+ * - WHO Air Quality Guidelines 2021
+ *   https://www.who.int/publications/i/item/9789240034228
+ *
+ * Official guideline:
+ * - Annual mean NO₂: 10 µg/m³
+ * - Short-term (24h) guideline: 25 µg/m³
+ *
+ * Map interpretation:
+ * - ≤10 µg/m³   : clean / background levels
+ * - 10–25 µg/m³: elevated but within WHO guidance
+ * - >25 µg/m³  : increasingly polluted (health risk likely)
+ *
+ * ----------------------------
+ * EU (European Union)
+ * ----------------------------
+ * Source:
+ * - EU Air Quality Directive 2008/50/EC
+ *   https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32008L0050
+ *
+ * Legal limit values:
+ * - Annual mean NO₂: 40 µg/m³
+ * - Hourly limit: 200 µg/m³ (not applicable to passive samplers)
+ *
+ * Map interpretation:
+ * - ≤40 µg/m³   : within EU annual limit
+ * - 40–60 µg/m³: structurally high urban concentrations
+ * - >60 µg/m³  : very high for monthly passive measurements
+ *
+ * ----------------------------
+ * Important note
+ * ----------------------------
+ * - These scales are NOT legal compliance tools.
+ * - They are designed for comparative, educational and exploratory mapping only.
+ * - Color breaks are intentionally conservative to reflect the smoothing effect
+ *   of passive monthly sampling.
+ */
 const SCALE_PRESETS = {
   WHO:  { key: "WHO",  label: "WHO",  annual: 10,  high: 25,  colorMax: 50 },
   EU:   { key: "EU",   label: "EU",   annual: 40,  high: 60,  colorMax: 80 },
-  US:   { key: "US",   label: "US",   annual: 100, high: 120, colorMax: 150 },
   DATA: { key: "DATA", label: "Data", annual: null, high: null, colorMax: null }
 };
 
@@ -292,7 +347,6 @@ function createUiLogin() {
     [
       { key: "WHO", label: "WHO" },
       { key: "EU", label: "EU" },
-      { key: "US", label: "US" },
       { key: "DATA", label: "Data" }
     ].forEach(p => {
       const b = L.DomUtil.create("button", "", btnRow);

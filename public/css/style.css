@@ -5,8 +5,9 @@
 }
 
 :root {
-  --color-bg: #096e00;
-  --color-text: #ffffff;
+  --color-bg: #EEF2F6;
+  --color-header: #215C6F;
+  --color-white: #ffffff;
   --color-surface: #ffffff;
   --color-border: #a3a3a3;
   --color-primary: #096e00;
@@ -24,7 +25,7 @@ body {
   display: flex;
   flex-direction: column;
   background-color: var(--color-bg);
-  color: var(--color-text);
+  color: var(--color-white);
   font-family: var(--font-base);
   line-height: 1.5;
 }
@@ -32,10 +33,9 @@ body {
 /* Header */
 
 header {
-  background-color: var(--color-surface);
-  color: #000000;
+  background-color: var(--color-header);
+  color: #FFFFFF;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--color-border);
 }
 
 header h1 {
@@ -48,10 +48,8 @@ header h1 {
   display: flex;
   align-items: center;
   gap: 10px;
-  border-left: 2px solid var(--color-border);
-  border-bottom: 2px solid var(--color-border);
-  border-bottom-left-radius: 20px;
   padding: 6px 10px;
+  width: 70%;
 }
 
 header img {
@@ -81,9 +79,18 @@ header img {
 /* Main content (globaal) */
 
 main {
+  background-color: var(--color-white);
   flex: 1;
   overflow: auto;
   border-bottom: 1px solid var(--color-border);
+  margin-top: 10px;
+  border-radius: 12px;
+}
+
+main #map {
+  height: auto;
+  margin: 12px;
+  border-radius: 12px;
 }
 
 .menu-control{
@@ -102,6 +109,18 @@ main {
   border: 1px solid var(--color-border);
   border-radius: 12px;
   box-shadow: var(--shadow-soft);
+  cursor: pointer;
+}
+
+.header-button{
+  font-size: 22px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: var(--color-white);
+  background: none;
+  border: none;
   cursor: pointer;
 }
 

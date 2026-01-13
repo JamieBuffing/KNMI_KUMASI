@@ -9,14 +9,14 @@
 <body class="page-home">
     <header>
         <%- include('../partials/header'); %>
+        <button class="header-button" type="button">☰</button>
     </header>
     <main>
+        <div><p>Test</p></div>
         <div id="map"></div>
     </main>
-    <footer>
-        <%- include('../partials/footer'); %>
-    </footer>
     <script src="/js/map.js" defer></script>
+    <script src="/js/index.js" defer></script>
     <script id="boot-data" type="application/json">
         <%- JSON.stringify({
             keuzes: keuzes || [],
