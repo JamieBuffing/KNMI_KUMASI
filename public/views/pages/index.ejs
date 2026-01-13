@@ -1,28 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <%- include('../partials/head'); %>
-    <title>Home</title>
-    <link rel="stylesheet" href="/leafletcss/leaflet.css" />
-    <script src="/leafletjs/leaflet.js"></script>
+  <%- include('../partials/head'); %>
+  <title>Home</title>
+  <link rel="stylesheet" href="/leafletcss/leaflet.css" />
+  <script src="/leafletjs/leaflet.js"></script>
+  <link rel="stylesheet" href="/css/index.css">
 </head>
 <body class="page-home">
-    <header>
-        <%- include('../partials/header'); %>
-        <button class="header-button" type="button">☰</button>
-    </header>
-    <main>
-        <div><p>Test</p></div>
+  <header>
+    <%- include('../partials/header'); %>
+    <button class="header-button" type="button">☰</button>
+  </header>
+  <main class="home-layout">
+    <section class="home-info">
+      <a href="/info" class="info-btn" aria-label="Info this project">i</a><br><br>
+      <div class="home-title-row">
+        <h2>Kumasi Air Quality</h2>
+        <span class="chip">NO₂</span>
+      </div>
+      <div class="home-subrow">
+        <div class="view-toggle" data-view-toggle>
+        <button class="view-toggle__item is-active" data-view="map" type="button">
+          Map
+        </button>
+        <button class="view-toggle__item" data-view="table" type="button">
+          Table
+        </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="view-container">
+      <div id="map-view" class="view is-active">
         <div id="map"></div>
-    </main>
-    <script src="/js/map.js" defer></script>
-    <script src="/js/index.js" defer></script>
-    <script id="boot-data" type="application/json">
-        <%- JSON.stringify({
-            keuzes: keuzes || [],
-            points: initialPoints || []
-        }) %>
-    </script>
+      </div>
+
+      <div id="table-view" class="view">
+        <!-- placeholder, hier komt later je table/andere view -->
+        <div style="padding: 12px; color:#000;">Tabel</div>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="/js/map/index.js"></script>
+  <script src="/js/index.js" defer></script>
+  <script id="boot-data" type="application/json">
+    <%- JSON.stringify({
+      keuzes: keuzes || [],
+      points: initialPoints || []
+    }) %>
+  </script>
 <script>
   window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
 </script>

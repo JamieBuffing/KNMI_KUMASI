@@ -1,0 +1,261 @@
+/* ==============================
+   HOME / INDEX (MAP PAGE)
+   ============================== */
+
+/*
+  Layout:
+  ┌───────────────────────────┐
+  │  .home-info               │  ← info boven de kaart
+  ├───────────────────────────┤
+  │  #map (Leaflet)           │  ← kaart vult resterende ruimte
+  └───────────────────────────┘
+*/
+
+/* Main wordt een kolom */
+.page-home main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  border-bottom: none;
+}
+
+/* ==============================
+   INFO BOVEN DE KAART
+   ============================== */
+
+.page-home .home-info {
+  color: #000;
+  margin: 12px 12px 0 12px;
+}
+
+/* Titel + info knop */
+.page-home .home-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.page-home .home-title-row h2 {
+  font-size: 18px;
+  margin: 0;
+  color: var(--color-header);
+  font-weight: 600;
+}
+
+/* info knop (i) */
+.page-home .info-btn {
+  float: right;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.2);
+  background: rgba(255,255,255,0.9);
+  cursor: pointer;
+
+  font-weight: 700;
+  font-size: 14px;
+
+  /* nieuw */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--color-header);
+}
+
+
+/* Subregel (bijv. NO₂ chip) */
+.page-home .home-subrow {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Chip (NO₂) */
+.page-home .chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef2f6;
+  border: 1px solid rgba(0,0,0,0.12);
+  font-size: 12px;
+  font-weight: 600;
+  color: #0b3d4d;
+}
+
+/* ==============================
+   MAP CONTAINER
+   ============================== */
+
+/* Kaart vult resterende hoogte */
+.page-home #map {
+  flex: 1;
+  margin: 0 12px 12px 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative; /* nodig voor Leaflet */
+}
+
+/* ==============================
+   MENU (hamburger – optioneel)
+   ============================== */
+
+.menu-control {
+  position: relative;
+}
+
+/* hamburger knop */
+.menu-button {
+  font-size: 22px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+
+  background: rgba(255,255,255,0.9);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+  cursor: pointer;
+}
+
+/* dropdown container */
+.menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+  padding: 6px;
+
+  display: none;
+  min-width: 140px;
+}
+
+.menu-dropdown.open {
+  display: block;
+}
+
+/* ==============================
+   MAP UI: YEAR / MONTH (bottom-left)
+   ============================== */
+
+.map-ui {
+  background: var(--color-surface);
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-soft);
+  font-family: var(--font-base);
+  font-size: 13px;
+  min-width: 160px;
+  color: #000000;
+}
+
+.map-ui label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.map-ui input[type="range"] {
+  width: 100%;
+}
+
+/* ==============================
+   SCALE CONTROL (bottom-right)
+   ============================== */
+
+.scale-control {
+  position: absolute;
+  bottom: -10px;    
+  right: -10px;
+  background: rgba(255,255,255,1);
+  padding: 6px 6px 20px 6px;
+  border-radius: 8px 0px 0px 0px;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  gap: 6px;
+}
+
+.scale-control button {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  background: #f8f9fa;
+  color: #333;
+}
+
+.scale-control button.is-active {
+  background: #007bff;
+  color: #fff;
+}
+
+.scale-control button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* ==============================
+   VIEW TOGGLE (Map / Table)
+   ============================== */
+
+.view-toggle {
+  display: inline-flex;
+  background: #eef2f6;
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.view-toggle__item {
+  min-width: 90px;
+  padding: 6px 14px;
+  border-radius: 999px;
+
+  border: none;
+  background: transparent;
+  cursor: pointer;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.view-toggle__item.is-active {
+  background: #ffffff;
+  color: var(--color-header);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* ==============================
+   VIEW CONTAINER
+   ============================== */
+
+.view-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.view {
+  display: none;
+  flex: 1;
+  overflow: hidden;
+}
+
+.view.is-active {
+  display: flex;
+  flex-direction: column;
+}
