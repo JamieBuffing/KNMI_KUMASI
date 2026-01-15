@@ -87,6 +87,44 @@ function getCategory(value) {
   return `> ${h}${VALUE_SUFFIX}`;
 }
 
+// Level meta for popup badge/table (based on activeScale)
+function getLevelMeta(value, isNoMeasurement) {
+  if (isNoMeasurement || typeof value !== "number" || Number.isNaN(value)) {
+    return {
+      label: "n/a",
+      badgeBg: "#E5E7EB",
+      badgeText: "#334155",
+      accent: "#94A3B8"
+    };
+  }
+
+  const a = activeScale?.annual;
+  const h = activeScale?.high;
+
+  // If we can't classify, still show something nice
+  if (typeof a !== "number" || typeof h !== "number") {
+    return {
+      label: "Measured",
+      badgeBg: "#E0F2FE",
+      badgeText: "#075985",
+      accent: "#0284C7"
+    };
+  }
+
+  const highUpper = h + (h - a);
+
+  if (value <= a) {
+    return { label: "Low", badgeBg: "#DCFCE7", badgeText: "#166534", accent: "#22C55E" };
+  }
+  if (value <= h) {
+    return { label: "Medium", badgeBg: "#FEF9C3", badgeText: "#854D0E", accent: "#EAB308" };
+  }
+  if (value <= highUpper) {
+    return { label: "High", badgeBg: "#FFEDD5", badgeText: "#9A3412", accent: "#F97316" };
+  }
+  return { label: "Very high", badgeBg: "#FEE2E2", badgeText: "#991B1B", accent: "#EF4444" };
+}
+
 function setScalePreset(key) {
   const preset = SCALE_PRESETS[key];
   if (!preset) return;
@@ -635,7 +673,7 @@ function findMeasurement(point, year, monthIndex) {
   });
 }
 
-/* Popup sparkline + popup HTML */
+/* Popup sparkline + popup HTML (legacy helpers, no longer used for marker popup) */
 function buildSparklineSvg(monthValues) {
   // monthValues: length 12 array of numbers or null
   const w = 280;
@@ -750,6 +788,297 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
+/* Popup slider (controls + dots + swipe)
+   - Works with Leaflet popup re-renders by using global event delegation.
+   - Supports swipe/drag horizontally on touch, pen and mouse.
+   Contract expected in popup HTML:
+     [data-slider-root] wrapper
+       [data-slide] (one per slide)
+       [data-prev], [data-next] buttons
+       [data-dot] buttons (optional)
+*/
+const PopupSlider = (() => {
+  const ROOT_SEL = "[data-slider-root]";
+  const SLIDE_SEL = "[data-slide]";
+  const DOT_SEL = "[data-dot]";
+  const PREV_SEL = "[data-prev]";
+  const NEXT_SEL = "[data-next]";
+
+  let globalBound = false;
+  let observer = null;
+
+  function stopEvent(e) {
+    if (!e) return;
+    // Prevent Leaflet from treating UI clicks as map clicks (which can close the popup)
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+  }
+
+  // Robust closest that tolerates Text nodes and older WebViews.
+  function matches(el, sel) {
+    const p = Element.prototype;
+    const fn = p.matches || p.msMatchesSelector || p.webkitMatchesSelector;
+    return !!(el && el.nodeType === 1 && fn && fn.call(el, sel));
+  }
+  function closest(node, sel) {
+    let el = node;
+    if (!el) return null;
+    // Text node -> element parent
+    if (el.nodeType === 3) el = el.parentElement;
+    while (el && el.nodeType === 1) {
+      if (matches(el, sel)) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  function getState(root) {
+    const slides = Array.from(root.querySelectorAll(SLIDE_SEL));
+    const dots = Array.from(root.querySelectorAll(DOT_SEL));
+    const prev = root.querySelector(PREV_SEL);
+    const next = root.querySelector(NEXT_SEL);
+    return { slides, dots, prev, next };
+  }
+
+  function clamp(i, min, max) {
+    return Math.max(min, Math.min(max, i));
+  }
+
+  function apply(root, nextIdx) {
+    const { slides, dots, prev, next } = getState(root);
+    if (!slides.length) return;
+
+    const max = slides.length - 1;
+    const idx = clamp(nextIdx, 0, max);
+
+    root.setAttribute("data-active", String(idx));
+
+    slides.forEach((s, k) => {
+      // Keep it simple and deterministic: only the active slide is visible.
+      s.style.display = (k === idx) ? "block" : "none";
+    });
+
+    dots.forEach((d, k) => {
+      const active = k === idx;
+      d.setAttribute("aria-pressed", active ? "true" : "false");
+      // If you use inline styling, we leave it; CSS can key off [data-active] as well.
+    });
+
+    if (prev) {
+      prev.disabled = idx === 0;
+      prev.setAttribute("aria-disabled", prev.disabled ? "true" : "false");
+    }
+    if (next) {
+      next.disabled = idx === max;
+      next.setAttribute("aria-disabled", next.disabled ? "true" : "false");
+    }
+  }
+
+  function bump(root, delta) {
+    const current = Number(root.getAttribute("data-active")) || 0;
+    apply(root, current + delta);
+  }
+
+  function gotoDot(root, dotEl) {
+    const { dots } = getState(root);
+    const idx = dots.indexOf(dotEl);
+    if (idx >= 0) apply(root, idx);
+  }
+
+  function prepareRoot(root) {
+    if (!root || root.dataset.sliderPrepared === "1") return;
+    root.dataset.sliderPrepared = "1";
+
+    // Make Leaflet ignore interactions inside the popup UI.
+    if (window.L && L.DomEvent) {
+      L.DomEvent.disableClickPropagation(root);
+      L.DomEvent.disableScrollPropagation(root);
+    }
+
+    const idx = Number(root.getAttribute("data-active")) || 0;
+    apply(root, idx);
+  }
+
+  function preparePopup(popupEl) {
+    if (!popupEl) return;
+
+    // Extra safety: Leaflet closes popups on map "preclick" which can be triggered
+    // by mousedown/pointerdown bubbling from inside the popup. Disabling click
+    // propagation on the whole popup prevents that.
+    if (window.L && L.DomEvent) {
+      L.DomEvent.disableClickPropagation(popupEl);
+      L.DomEvent.disableScrollPropagation(popupEl);
+    }
+
+    popupEl.querySelectorAll(ROOT_SEL).forEach(prepareRoot);
+  }
+
+  // ----- Global (delegated) controls -----
+  function onClickLike(e) {
+    const prev = closest(e.target, PREV_SEL);
+    const next = closest(e.target, NEXT_SEL);
+    const dot = closest(e.target, DOT_SEL);
+    if (!prev && !next && !dot) return;
+
+    const root = closest(e.target, ROOT_SEL) || closest((prev || next || dot), ROOT_SEL);
+    if (!root) return;
+
+    prepareRoot(root);
+
+    stopEvent(e);
+
+    if (prev) bump(root, -1);
+    else if (next) bump(root, +1);
+    else if (dot) gotoDot(root, dot);
+  }
+
+  // ----- Swipe/drag -----
+  const swipe = {
+    active: false,
+    root: null,
+    id: null,
+    x0: 0,
+    y0: 0,
+    x1: 0,
+    y1: 0,
+    moved: false,
+    lock: null // "h" | "v" | null
+  };
+
+  function resetSwipe() {
+    swipe.active = false;
+    swipe.root = null;
+    swipe.id = null;
+    swipe.x0 = swipe.y0 = swipe.x1 = swipe.y1 = 0;
+    swipe.moved = false;
+    swipe.lock = null;
+  }
+
+  function onPointerDown(e) {
+    // Only start swipe inside a slider root, but ignore presses on controls
+    const root = closest(e.target, ROOT_SEL);
+    if (!root) return;
+
+    // Clicking controls should NEVER bubble to the map (Leaflet may close popup on "preclick")
+    if (closest(e.target, PREV_SEL) || closest(e.target, NEXT_SEL) || closest(e.target, DOT_SEL)) {
+      prepareRoot(root);
+      stopEvent(e);
+      return;
+    }
+
+    prepareRoot(root);
+
+    swipe.active = true;
+    swipe.root = root;
+    swipe.id = e.pointerId;
+    swipe.x0 = swipe.x1 = e.clientX;
+    swipe.y0 = swipe.y1 = e.clientY;
+    swipe.moved = false;
+    swipe.lock = null;
+
+    try { root.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+
+  // Leaflet's popup closing is often triggered by a map-level "preclick" derived from
+  // mousedown/touchstart. Some environments still fire those events even when Pointer
+  // Events are supported. So we defensively stop them for slider UI.
+  function onMouseDown(e) {
+    const root = closest(e.target, ROOT_SEL);
+    if (!root) return;
+    prepareRoot(root);
+    stopEvent(e);
+  }
+
+  function onTouchStart(e) {
+    const root = closest(e.target, ROOT_SEL);
+    if (!root) return;
+    prepareRoot(root);
+    stopEvent(e);
+  }
+
+  function onPointerMove(e) {
+    if (!swipe.active || e.pointerId !== swipe.id || !swipe.root) return;
+
+    swipe.x1 = e.clientX;
+    swipe.y1 = e.clientY;
+
+    const dx = swipe.x1 - swipe.x0;
+    const dy = swipe.y1 - swipe.y0;
+
+    if (!swipe.lock) {
+      const adx = Math.abs(dx);
+      const ady = Math.abs(dy);
+      if (adx < 6 && ady < 6) return; // tiny jitter
+      swipe.lock = (adx >= ady) ? "h" : "v";
+    }
+
+    if (swipe.lock === "h") {
+      swipe.moved = true;
+      // Prevent page scroll / Leaflet drag while swiping horizontally
+      stopEvent(e);
+    }
+  }
+
+  function onPointerUp(e) {
+    if (!swipe.active || e.pointerId !== swipe.id || !swipe.root) return;
+
+    const dx = swipe.x1 - swipe.x0;
+    const dy = swipe.y1 - swipe.y0;
+
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+
+    const SWIPE_THRESHOLD = 45; // px
+    const H_DOMINANCE = 1.2;    // must be clearly more horizontal than vertical
+
+    if (swipe.lock === "h" && absX >= SWIPE_THRESHOLD && absX >= absY * H_DOMINANCE) {
+      // dx < 0 => swipe left => next
+      bump(swipe.root, dx < 0 ? +1 : -1);
+      stopEvent(e);
+    }
+
+    resetSwipe();
+  }
+
+  function bindGlobal() {
+    if (globalBound) return;
+    globalBound = true;
+
+    // capture = true helps when Leaflet or other handlers stop propagation
+    document.addEventListener("click", onClickLike, true);
+    document.addEventListener("pointerup", onClickLike, true);
+
+    document.addEventListener("pointerdown", onPointerDown, true);
+    // Some browsers still emit mousedown/touchstart that Leaflet uses for "preclick"
+    // even when pointer events are present.
+    document.addEventListener("mousedown", onMouseDown, true);
+    document.addEventListener("touchstart", onTouchStart, { capture: true, passive: false });
+    document.addEventListener("pointermove", onPointerMove, { capture: true, passive: false });
+    document.addEventListener("pointerup", onPointerUp, true);
+    document.addEventListener("pointercancel", onPointerUp, true);
+
+    // Optional: watch for popups inserted without a popupopen hook
+    if (window.MutationObserver) {
+      observer = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          for (const n of m.addedNodes || []) {
+            if (!n || n.nodeType !== 1) continue;
+            if (n.matches && n.matches(".leaflet-popup")) preparePopup(n);
+            if (n.querySelectorAll) {
+              const popups = n.querySelectorAll(".leaflet-popup");
+              popups.forEach(preparePopup);
+            }
+          }
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+  }
+
+  return { bindGlobal, preparePopup };
+})();
+
 function updateMarkers() {
   if (!map || !allPoints?.length || !selectedYear) return;
   if (selectedMonthIndex == null) return;
@@ -791,16 +1120,363 @@ function updateMarkers() {
     })
       .addTo(markersLayer)
       .bindPopup(() => {
-        // Leaflet expects popup content to be a string or a DOM Node.
-        // If something inside buildPopupHtml throws, Leaflet will receive
-        // `undefined` and attempt to appendChild it, causing:
-        // "Failed to execute 'appendChild' on 'Node'".
-        try {
-          return String(buildPopupHtml(point, measurement, monthIndex));
-        } catch (err) {
-          console.error("Popup render error:", err);
-          return "<div class=\"popup\"><strong>Popup error</strong><div style=\"margin-top:6px\">Kon details niet laden.</div></div>";
+        // --- Basic info ---
+        const titleRaw = point.location || point.name || point.description || "Measurement point";
+        const descriptionRaw = point.description || "";
+        const title = escapeHtml(titleRaw);
+        const description = escapeHtml(descriptionRaw);
+
+        const isNo = !!measurement?.noMeasurement;
+        const value = measurement?.value;
+
+        const monthName = MONTH_NAMES[monthIndex] || "";
+        const measuredMonth = `${monthName} ${selectedYear}`;
+
+        // Safe date string (keep your working fix)
+        const dateStr = (() => {
+          const d = new Date(measurement?.date);
+          return Number.isNaN(d.getTime()) ? "-" : d.toISOString().slice(0, 10);
+        })();
+
+        // Collect all measurements in the selected year (sorted by date)
+        const yearMeasurements = (point.measurements || [])
+          .filter(m => {
+            if (!m?.date) return false;
+            const d = new Date(m.date);
+            return !Number.isNaN(d.getTime()) && d.getFullYear() === selectedYear;
+          })
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        // --- Keep your existing chart EXACTLY (sparklineSvg) ---
+        let sparklineSvg = `<div style="font-size:10px; color:#888;">Not enough data</div>`;
+
+        // Build a full year series (in display order) but allow nulls for gaps
+        const series = (point.measurements || [])
+          .filter(m => {
+            if (!m?.date) return false;
+            const d = new Date(m.date);
+            return !Number.isNaN(d.getTime()) && d.getFullYear() === selectedYear;
+          })
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .map(m => {
+            const d = new Date(m.date);
+            const v = (typeof m.value === "number" && !Number.isNaN(m.value)) ? m.value : null;
+            return {
+              date: d,
+              monthShort: d.toLocaleString("en-US", { month: "short" }),
+              value: v
+            };
+          });
+
+        const numericVals = series.filter(p => p.value !== null).map(p => p.value);
+
+        if (numericVals.length >= 2) {
+          // Match your target look: full width SVG with axes + labels, taller chart
+          const vbW = 200;
+          const vbH = 80;
+
+          // Axis + padding like your example
+          const x0 = 40;          // left padding for Y axis labels
+          const x1 = 190;         // right end of chart
+          const yTop = 10;
+          const yBottom = 62;
+
+          const innerW = x1 - x0;
+          const innerH = yBottom - yTop;
+
+          const minV = Math.min(...numericVals);
+          const maxV = Math.max(...numericVals);
+          const range = (maxV - minV) || 1;
+
+          // Map series points to x/y; null stays null so we can split segments
+          const pts = series.map((p, i) => {
+            const x = x0 + (i / (series.length - 1)) * innerW;
+            if (p.value === null) return { ...p, x, y: null };
+            const y = yTop + (1 - ((p.value - minV) / range)) * innerH;
+            return { ...p, x, y };
+          });
+
+          // Gradient stops based on available numeric points (spread over x)
+          const gradStops = pts
+            .filter(p => p.value !== null)
+            .map(p => {
+              const offset = ((p.x - x0) / innerW) * 100;
+              const c = getColor(normalizeForColor(p.value));
+              return `<stop offset="${offset}%" stop-color="${c}"></stop>`;
+            })
+            .join("");
+
+          // Build segmented polylines (break on nulls)
+          const segments = [];
+          let current = [];
+          for (const p of pts) {
+            if (p.value === null) {
+              if (current.length > 1) segments.push(current);
+              current = [];
+            } else {
+              current.push(p);
+            }
+          }
+          if (current.length > 1) segments.push(current);
+
+          const polylines = segments
+            .map(seg => `
+              <polyline
+                points="${seg.map(p => `${p.x},${p.y}`).join(" ")}"
+                fill="none"
+                stroke="url(#gradLine)"
+                stroke-width="2"
+              ></polyline>
+            `)
+            .join("");
+
+          // Dots (only numeric points)
+          const dots = pts
+            .filter(p => p.value !== null)
+            .map(p => {
+              const c = getColor(normalizeForColor(p.value));
+              return `<circle cx="${p.x}" cy="${p.y}" r="2.6" fill="${c}" stroke="#ffffff" stroke-width="1"></circle>`;
+            })
+            .join("");
+
+          // X-axis ticks + labels: first and last *available* month
+          const available = pts.filter(p => p.value !== null);
+          const first = available[0];
+          const last = available[available.length - 1];
+
+          const xTicks = `
+            <line x1="${first.x}" y1="${yBottom}" x2="${first.x}" y2="${yBottom + 5}" stroke="#888888" stroke-width="1"></line>
+            <line x1="${last.x}" y1="${yBottom}" x2="${last.x}" y2="${yBottom + 5}" stroke="#888888" stroke-width="1"></line>
+          `;
+
+          const xLabels = `
+            <text x="${first.x}" y="${vbH - 2}" font-size="8" text-anchor="middle">${first.monthShort}</text>
+            <text x="${last.x}" y="${vbH - 2}" font-size="8" text-anchor="middle">${last.monthShort}</text>
+          `;
+
+          const maxLabel = (Math.round(maxV * 100) / 100).toFixed(2);
+          const minLabel = (Math.round(minV * 100) / 100).toFixed(2);
+
+          sparklineSvg = `
+            <svg width="100%" viewBox="0 0 ${vbW} ${vbH}" preserveAspectRatio="none" style="overflow: visible;">
+              <defs>
+                <linearGradient id="gradLine" x1="${x0}" y1="0" x2="${x1}" y2="0" gradientUnits="userSpaceOnUse">
+                  ${gradStops}
+                </linearGradient>
+              </defs>
+
+              <line x1="${x0}" y1="${yTop}" x2="${x0}" y2="${yBottom}" stroke="#cccccc" stroke-width="1"></line>
+              <line x1="${x0}" y1="${yBottom}" x2="${x1}" y2="${yBottom}" stroke="#cccccc" stroke-width="1"></line>
+              <line x1="${x0 - 3}" y1="${yTop + innerH / 2}" x2="${x0}" y2="${yTop + innerH / 2}" stroke="#cccccc" stroke-width="1"></line>
+
+              <text x="${x0 - 4}" y="${yTop + 8}" font-size="8" text-anchor="end">${maxLabel}</text>
+              <text x="${x0 - 4}" y="${yBottom - 2}" font-size="8" text-anchor="end">${minLabel}</text>
+
+              ${xTicks}
+              ${xLabels}
+
+              ${polylines}
+              ${dots}
+            </svg>
+          `;
         }
+
+        // --- Popup card values ---
+        const valueNum = (!isNo && typeof value === "number" && !Number.isNaN(value)) ? value : null;
+        const level = getLevelMeta(valueNum, isNo);
+
+        const valueText = isNo
+          ? "n/a"
+          : (valueNum != null ? `${valueNum.toFixed(0)}${VALUE_SUFFIX}` : "—");
+
+        const whoGuideline = (activeScale?.key === "WHO")
+          ? "&lt; 10 µg/m³"
+          : (typeof activeScale?.annual === "number" ? `&lt; ${activeScale.annual}${VALUE_SUFFIX}` : "—");
+
+        const contextText = (valueNum != null) ? escapeHtml(getCategory(valueNum)) : "—";
+
+        // Table rows like screenshot
+        const tableRowsHtml = (yearMeasurements || []).map(m => {
+          const md = new Date(m.date);
+          const monthLabel = Number.isNaN(md.getTime())
+            ? "—"
+            : `${md.toLocaleString("en-US", { month: "short" })} ${md.getFullYear()}`;
+
+          const v = (!m.noMeasurement && typeof m.value === "number" && !Number.isNaN(m.value)) ? m.value : null;
+          const rowLevel = getLevelMeta(v, !!m.noMeasurement || v == null);
+
+          const vCell = (v == null) ? "n/a" : `${v.toFixed(0)}`;
+          return `
+            <tr style="border-top: 1px solid #EEF2F7;">
+              <td style="padding: 6px 10px; font-size: 11px; color:#334155;">${escapeHtml(monthLabel)}</td>
+              <td style="padding: 6px 10px; font-size: 11px; color:#0F172A; text-align:right;">${escapeHtml(vCell)}</td>
+              <td style="padding: 6px 10px; font-size: 11px; text-align:right;">
+                <span style="color:${rowLevel.accent}; font-weight:700;">${escapeHtml(rowLevel.label)}</span>
+              </td>
+            </tr>
+          `;
+        }).join("");
+
+        const latStr = (typeof point.coordinates?.lat === "number") ? point.coordinates.lat.toFixed(4) : "—";
+        const lonStr = (typeof point.coordinates?.lon === "number") ? point.coordinates.lon.toFixed(4) : "—";
+
+        // --- NEW popup layout (like your screenshot) ---
+        return `
+          <div style="
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            color:#0F172A;
+          ">
+            <!-- Header -->
+            <div style="margin-bottom: 8px;">
+              <div style="font-size: 18px; font-weight: 800; color:#0F4C81; line-height:1.2;">
+                ${title}
+              </div>
+              ${descriptionRaw ? `<div style="margin-top: 4px; font-size: 12px; color:#0B3B63;">${description}</div>` : ""}
+            </div>
+
+            <!-- Slider controls -->
+            <div data-slider-root data-active="0" tabindex="0" style="
+              border: 1px solid #E6EEF6;
+              border-radius: 12px;
+              background:#fff;
+              overflow: hidden;
+            ">
+              <div style="
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                padding: 8px 10px;
+                border-bottom: 1px solid #E6EEF6;
+                background:#F8FAFC;
+              ">
+                <button data-prev type="button" style="
+                  border: 1px solid #E6EEF6; background:#fff; border-radius: 10px;
+                  padding: 4px 8px; font-weight:700; cursor:pointer;
+                " aria-label="Previous slide">‹</button>
+
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <button data-dot type="button" style="width:8px;height:8px;border-radius:99px;border:0;background:#94A3B8;cursor:pointer;" aria-label="Slide 1"></button>
+                  <button data-dot type="button" style="width:8px;height:8px;border-radius:99px;border:0;background:#94A3B8;cursor:pointer;" aria-label="Slide 2"></button>
+                  <button data-dot type="button" style="width:8px;height:8px;border-radius:99px;border:0;background:#94A3B8;cursor:pointer;" aria-label="Slide 3"></button>
+                </div>
+
+                <button data-next type="button" style="
+                  border: 1px solid #E6EEF6; background:#fff; border-radius: 10px;
+                  padding: 4px 8px; font-weight:700; cursor:pointer;
+                " aria-label="Next slide">›</button>
+              </div>
+
+              <!-- Slide 1: INFO -->
+              <div data-slide style="display:block; padding: 12px;">
+                <div style="display:flex; gap:18px; padding-bottom: 10px; border-bottom: 1px solid #E6EEF6; margin-bottom: 10px;">
+                  <div style="flex:1;">
+                    <div style="font-size: 11px; letter-spacing:.04em; color:#0B3B63; text-transform: uppercase;">MEASURED MONTH</div>
+                    <div style="margin-top: 3px; font-weight: 800; color:#0F4C81;">${escapeHtml(measuredMonth)}</div>
+                  </div>
+                  <div style="flex:1;">
+                    <div style="font-size: 11px; letter-spacing:.04em; color:#0B3B63; text-transform: uppercase;">FREQUENCY</div>
+                    <div style="margin-top: 3px; font-weight: 800; color:#0F4C81;">Monthly</div>
+                  </div>
+                </div>
+
+                <div style="
+                  border: 1px solid #E6EEF6;
+                  border-radius: 12px;
+                  padding: 12px;
+                  box-shadow: 0 1px 0 rgba(15, 23, 42, .04);
+                  background: #FFFFFF;
+                ">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px;">
+                    <div style="font-size: 11px; color:#64748B;">Measured using passive diffusion tubes</div>
+                    <span style="
+                      padding: 3px 10px;
+                      border-radius: 999px;
+                      font-size: 11px;
+                      font-weight: 800;
+                      background: ${level.badgeBg};
+                      color: ${level.badgeText};
+                      border: 1px solid rgba(15, 23, 42, .10);
+                    ">${escapeHtml(level.label)}</span>
+                  </div>
+
+                  <div style="display:flex; align-items:flex-end; justify-content:space-between; gap: 12px;">
+                    <div>
+                      <div style="font-size: 11px; color:#64748B; margin-bottom: 2px;">NO₂</div>
+                      <div style="font-size: 22px; font-weight: 900; color:#0F172A; line-height:1;">
+                        ${escapeHtml(valueText)}
+                      </div>
+                      <div style="margin-top: 6px; font-size: 10px; color:#64748B;">*Based on monthly average NO₂</div>
+                      <div style="margin-top: 8px; font-size: 11px; color:#0B3B63;">
+                        <span style="font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:#94A3B8;">WHO context</span><br>
+                        <strong>${contextText}</strong>
+                      </div>
+                    </div>
+
+                    <div style="text-align:right;">
+                      <div style="font-size: 10px; color:#64748B;">WHO guideline (annual):</div>
+                      <div style="font-size: 11px; color:#334155; font-weight:800;">${whoGuideline}</div>
+                      <div style="margin-top: 10px; font-size: 11px; font-weight:800; color:#0F4C81;">
+                        Higher than recommended for long-term health
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="margin-top: 10px; font-size: 11px; color:#64748B;">Date: ${escapeHtml(dateStr)}</div>
+                </div>
+              </div>
+
+              <!-- Slide 2: GRAPH -->
+              <div data-slide style="display:none; padding: 12px;">
+                <div style="font-size: 12px; letter-spacing:.06em; color:#0B3B63; text-transform: uppercase; margin: 2px 0 10px; font-weight:900;">
+                  MONTHLY VALUES ${escapeHtml(String(selectedYear))}
+                </div>
+                <div>${sparklineSvg}</div>
+              </div>
+
+              <!-- Slide 3: TABLE -->
+              <div data-slide style="display:none; padding: 12px;">
+                <div style="font-size: 12px; letter-spacing:.06em; color:#0B3B63; text-transform: uppercase; margin: 2px 0 10px; font-weight:900;">
+                  TABLE ${escapeHtml(String(selectedYear))}
+                </div>
+
+                <div style="
+                  border: 1px solid #E6EEF6;
+                  border-radius: 12px;
+                  overflow: hidden;
+                  background:#FFFFFF;
+                ">
+                  <table style="width:100%; border-collapse: collapse;">
+                    <thead>
+                      <tr style="background:#F8FAFC;">
+                        <th style="text-align:left; padding: 8px 10px; font-size: 11px; color:#0F4C81;">Month</th>
+                        <th style="text-align:right; padding: 8px 10px; font-size: 11px; color:#0F4C81;">NO₂ (µg/m³)</th>
+                        <th style="text-align:right; padding: 8px 10px; font-size: 11px; color:#0F4C81;">Level</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${tableRowsHtml || `<tr><td colspan="3" style="padding:10px; font-size:11px; color:#64748B;">No data</td></tr>`}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="font-size: 10px; color:#64748B; display:flex; justify-content:space-between; margin-top: 10px;">
+              <span>Lat: ${escapeHtml(latStr)}</span>
+              <span>Lon: ${escapeHtml(lonStr)}</span>
+            </div>
+
+            <style>
+              /* dots active state (scoped by attribute selector, safe in popup) */
+              [data-slider-root][data-active="0"] [data-dot]:nth-child(1),
+              [data-slider-root][data-active="1"] [data-dot]:nth-child(2),
+              [data-slider-root][data-active="2"] [data-dot]:nth-child(3) {
+                background:#0F4C81 !important;
+              }
+            </style>
+          </div>
+        `;
       }, {
         pane: POPUP_PANE_TOP,
         minWidth: 320,
@@ -825,7 +1501,12 @@ function initMap(startCoords, startZoom) {
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 17 }).addTo(map);
 
-  map.on("popupopen", () => setLeafletControlsHidden(true));
+  PopupSlider.bindGlobal();
+
+  map.on("popupopen", (e) => {
+    setLeafletControlsHidden(true);
+    PopupSlider.preparePopup(e.popup.getElement());
+  });
   map.on("popupclose", () => setLeafletControlsHidden(false));
 }
 
