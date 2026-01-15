@@ -144,7 +144,7 @@
 }
 
 /* ==============================
-   MAP UI: YEAR / MONTH (bottom-left)
+   MAP UI: YEAR / MONTH (legacy)
    ============================== */
 
 .map-ui {
@@ -165,6 +165,147 @@
 
 .map-ui input[type="range"] {
   width: 100%;
+}
+
+/* ==============================
+   MONTH/YEAR PICKER (top-right)
+   ============================== */
+
+.month-year-control {
+  background: var(--color-surface);
+  padding: 6px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+  font-family: var(--font-base);
+  color: #000;
+}
+
+.myc-summary-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 6px 10px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+
+  /* 👇 nieuw: vaste/constante breedte */
+  min-width: 150px;     /* pas aan naar smaak */
+  box-sizing: border-box;
+}
+
+.myc-summary-text {
+  font-weight: 700;
+  white-space: nowrap;
+
+  /* 👇 nieuw: tekst neemt flex ruimte, zodat knopbreedte niet springt */
+  flex: 1;
+  text-align: center;
+}
+
+.myc-summary-icon {
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.myc-panel {
+  margin-top: 6px;
+  display: none;
+}
+
+.month-year-control.is-open .myc-panel {
+  display: block;
+}
+
+.myc-year-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.myc-year-nav {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #f8f9fa;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.myc-year-nav:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.myc-year-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.myc-year-display {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 4px 10px;
+  background: #fff;
+  font-weight: 700;
+  cursor: text;
+  font-size: 13px;
+}
+
+.myc-year-input {
+  width: 88px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 4px 8px;
+  text-align: center;
+  font-weight: 700;
+  outline: none;
+  font-size: 13px;
+}
+
+.myc-year-input:focus {
+  border-color: #007bff;
+}
+
+.myc-year-input.is-invalid {
+  border-color: #dc3545;
+}
+
+.myc-month-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.myc-month-btn {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 5px 0;
+  font-size: 11px;
+  background: #f8f9fa;
+  cursor: pointer;
+}
+
+.myc-month-btn.is-active {
+  background: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+
+.myc-month-btn:disabled,
+.myc-month-btn.is-disabled,
+.myc-year-nav:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
 }
 
 /* ==============================
@@ -258,4 +399,79 @@
 .view.is-active {
   display: flex;
   flex-direction: column;
+}
+.leaflet-control {
+  transition: opacity 0.15s ease;
+}
+.leaflet-control.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ==============================
+   TOOLTIP FOR DISABLED ITEMS
+   ============================== */
+
+.myc-month-btn.is-disabled,
+.myc-year-nav:disabled {
+  position: relative;
+}
+
+/* Tooltip bubble */
+.myc-month-btn.is-disabled::after,
+.myc-year-nav:disabled::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: rgba(0, 0, 0, 1);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  white-space: nowrap;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 1000;
+}
+
+/* Tooltip arrow */
+.myc-month-btn.is-disabled::before,
+.myc-year-nav:disabled::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(0,0,0,1) transparent transparent transparent;
+
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* Desktop hover */
+.myc-month-btn.is-disabled:hover::after,
+.myc-month-btn.is-disabled:hover::before,
+.myc-year-nav:disabled:hover::after,
+.myc-year-nav:disabled:hover::before {
+  opacity: 1;
+}
+
+/* Mobile tap / keyboard */
+.myc-month-btn.is-disabled:active::after,
+.myc-month-btn.is-disabled:active::before,
+.myc-month-btn.is-disabled:focus-visible::after,
+.myc-month-btn.is-disabled:focus-visible::before,
+.myc-year-nav:disabled:active::after,
+.myc-year-nav:disabled:active::before,
+.myc-year-nav:disabled:focus-visible::after,
+.myc-year-nav:disabled:focus-visible::before {
+  opacity: 1;
 }

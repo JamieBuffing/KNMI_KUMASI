@@ -8,11 +8,20 @@ let markersLayer;
 let allPoints = [];
 let selectedYear = null;
 
-let monthSlider = null;
-let monthLabelEl = null;
+let selectedMonthIndex = null; // 0-11
+
+// UI refs
+let monthButtons = []; // 12 buttons
+let yearDisplayEl = null;
+let yearInputEl = null;
+let yearPrevBtn = null;
+let yearNextBtn = null;
+
+let summaryBtnEl = null;
+let panelEl = null;
+let summaryTextEl = null;
 
 let availableMonthsByYear = {}; // { 2025: [0,1,2], ... }
-let activeMonths = [];          // months for selectedYear
 
 // -------------------- CONSTANTS --------------------
 const MONTH_NAMES = [
@@ -170,114 +179,325 @@ function computeDataScaleFromPoints(points) {
 }
 
 // -------------------- UI: YEAR/MONTH --------------------
-function updateMonthLabel() {
-  if (!monthSlider || !monthLabelEl) return;
-
-  if (!activeMonths || activeMonths.length === 0) {
-    monthLabelEl.textContent = "No data";
-    return;
-  }
-
-  const idx = Number(monthSlider.value);
-  const monthIndex = activeMonths[idx];
-  monthLabelEl.textContent = MONTH_NAMES[monthIndex];
+function isValidYear(year, years) {
+  return years.includes(year);
 }
 
+function clampYearToAvailable(year, years) {
+  if (!years.length) return null;
+  if (isValidYear(year, years)) return year;
+  // choose nearest year (fallback)
+  let nearest = years[0];
+  let bestDist = Math.abs(year - nearest);
+  for (const y of years) {
+    const d = Math.abs(year - y);
+    if (d < bestDist) {
+      bestDist = d;
+      nearest = y;
+    }
+  }
+  return nearest;
+}
+
+function getDefaultMonthForYear(year) {
+  const months = availableMonthsByYear[year] || [];
+  if (!months.length) return null;
+
+  const now = new Date();
+  const curMonth = now.getMonth();
+
+  // Prefer current month only when current year and month exists
+  if (year === now.getFullYear() && months.includes(curMonth)) return curMonth;
+
+  // Otherwise last available month
+  return months[months.length - 1];
+}
+
+function refreshYearNav(years) {
+  if (!yearPrevBtn || !yearNextBtn) return;
+  const idx = years.indexOf(selectedYear);
+  const prevDisabled = (idx <= 0);
+  const nextDisabled = (idx < 0 || idx >= years.length - 1);
+
+  yearPrevBtn.disabled = prevDisabled;
+  yearNextBtn.disabled = nextDisabled;
+
+  if (prevDisabled) {
+    const msg = "No earlier year available";
+    yearPrevBtn.setAttribute("data-tooltip", msg);
+    yearPrevBtn.setAttribute("aria-label", msg);
+    yearPrevBtn.setAttribute("title", msg);
+  } else {
+    yearPrevBtn.removeAttribute("data-tooltip");
+    yearPrevBtn.removeAttribute("aria-label");
+    yearPrevBtn.removeAttribute("title");
+  }
+
+  if (nextDisabled) {
+    const msg = "No later year available";
+    yearNextBtn.setAttribute("data-tooltip", msg);
+    yearNextBtn.setAttribute("aria-label", msg);
+    yearNextBtn.setAttribute("title", msg);
+  } else {
+    yearNextBtn.removeAttribute("data-tooltip");
+    yearNextBtn.removeAttribute("aria-label");
+    yearNextBtn.removeAttribute("title");
+  }
+}
+
+function setSelectedYear(year, years, { preserveMonth = true } = {}) {
+  if (!years.length) return;
+  const clampedYear = clampYearToAvailable(year, years);
+  if (clampedYear == null) return;
+
+  selectedYear = clampedYear;
+
+  if (yearDisplayEl) yearDisplayEl.textContent = String(selectedYear);
+
+  refreshYearNav(years);
+  refreshMonthButtons();
+
+  // Month selection logic
+  const months = availableMonthsByYear[selectedYear] || [];
+  if (!months.length) {
+    selectedMonthIndex = null;
+  } else if (preserveMonth && selectedMonthIndex != null && months.includes(selectedMonthIndex)) {
+    // keep
+  } else {
+    selectedMonthIndex = getDefaultMonthForYear(selectedYear);
+  }
+
+  highlightSelectedMonth();
+  updateSummaryDisplay();
+  updateMarkers();
+}
+
+function refreshMonthButtons() {
+  if (!monthButtons?.length) return;
+  const months = availableMonthsByYear[selectedYear] || [];
+  monthButtons.forEach((btn, monthIdx) => {
+    const enabled = months.includes(monthIdx);
+    btn.disabled = !enabled;
+    btn.classList.toggle("is-disabled", !enabled);
+    if (!enabled) {
+      btn.setAttribute("data-tooltip", "No data available for this month");
+    } else {
+      btn.removeAttribute("data-tooltip");
+    }
+  });
+}
+
+function highlightSelectedMonth() {
+  if (!monthButtons?.length) return;
+  monthButtons.forEach((btn, i) => {
+    btn.classList.toggle("is-active", selectedMonthIndex === i);
+  });
+}
+
+function updateSummaryDisplay() {
+  if (!summaryTextEl) return;
+  const monthName = (selectedMonthIndex != null) ? MONTH_NAMES[selectedMonthIndex] : "";
+  summaryTextEl.textContent = monthName ? `${monthName} ${selectedYear}` : String(selectedYear);
+}
+
+// Backwards compatibility: older code may still call this after UI creation.
+// It now refreshes month buttons/summary for the current selectedYear.
 function updateMonthSliderForYear(year) {
-  if (!monthSlider || !monthLabelEl) return;
+  // Optional: if caller passes a year, switch to it when possible.
+  // (We avoid needing the years array here; init now sets defaults correctly.)
+  if (typeof year === "number" && !Number.isNaN(year) && availableMonthsByYear && Object.prototype.hasOwnProperty.call(availableMonthsByYear, year)) {
+    selectedYear = year;
+    if (yearDisplayEl) yearDisplayEl.textContent = String(selectedYear);
+  }
 
-  activeMonths = availableMonthsByYear[year] || [];
+  refreshMonthButtons();
+  if (selectedMonthIndex == null) selectedMonthIndex = getDefaultMonthForYear(selectedYear);
+  highlightSelectedMonth();
+  updateSummaryDisplay();
+}
 
-  if (activeMonths.length === 0) {
-    monthSlider.disabled = true;
-    monthSlider.min = "0";
-    monthSlider.max = "0";
-    monthSlider.value = "0";
-    monthLabelEl.textContent = "No data";
+function tryCommitYearInput(years) {
+  if (!yearInputEl) return;
+  const raw = yearInputEl.value.trim();
+  const n = Number(raw);
+  if (!raw || Number.isNaN(n)) {
+    // revert
+    yearInputEl.value = String(selectedYear);
     return;
   }
 
-  monthSlider.disabled = false;
-  monthSlider.min = "0";
-  monthSlider.max = String(activeMonths.length - 1);
-  monthSlider.value = "0";
-  updateMonthLabel();
+  const y = Math.trunc(n);
+  if (!isValidYear(y, years)) {
+    yearInputEl.classList.add("is-invalid");
+    // revert after short delay (keeps feedback visible)
+    setTimeout(() => {
+      if (yearInputEl) {
+        yearInputEl.classList.remove("is-invalid");
+        yearInputEl.value = String(selectedYear);
+      }
+    }, 600);
+    return;
+  }
+
+  yearInputEl.classList.remove("is-invalid");
+  setSelectedYear(y, years, { preserveMonth: false });
+}
+
+function enterYearEditMode(years) {
+  if (!yearDisplayEl || !yearInputEl) return;
+
+  yearDisplayEl.style.display = "none";
+  yearInputEl.style.display = "inline-block";
+  yearInputEl.value = String(selectedYear);
+  yearInputEl.focus();
+  yearInputEl.select();
+
+  const onKey = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      tryCommitYearInput(years);
+      exitYearEditMode();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      yearInputEl.value = String(selectedYear);
+      exitYearEditMode();
+    }
+  };
+
+  const onBlur = () => {
+    tryCommitYearInput(years);
+    exitYearEditMode();
+  };
+
+  yearInputEl.addEventListener("keydown", onKey, { once: false });
+  yearInputEl.addEventListener("blur", onBlur, { once: true });
+
+  // store handler to remove later
+  yearInputEl._onKey = onKey;
+}
+
+function exitYearEditMode() {
+  if (!yearDisplayEl || !yearInputEl) return;
+
+  yearDisplayEl.style.display = "inline-block";
+  yearInputEl.style.display = "none";
+
+  if (yearInputEl._onKey) {
+    yearInputEl.removeEventListener("keydown", yearInputEl._onKey);
+    delete yearInputEl._onKey;
+  }
 }
 
 function createUiControl(years) {
-  const control = L.control({ position: "bottomleft" });
+  const control = L.control({ position: "topright" });
 
   control.onAdd = function () {
-    const container = L.DomUtil.create("div", "map-ui");
+    const container = L.DomUtil.create("div", "month-year-control");
 
     L.DomEvent.disableClickPropagation(container);
     L.DomEvent.disableScrollPropagation(container);
 
-    const yearTitle = L.DomUtil.create("div", "", container);
-    yearTitle.textContent = "Year";
+    // --- Collapsed summary button ---
+    const summaryBtn = L.DomUtil.create("button", "myc-summary-btn", container);
+    summaryBtn.type = "button";
+    summaryBtn.title = "Choose month and year";
 
-    const yearButtonsContainer = L.DomUtil.create("div", "", container);
-    yearButtonsContainer.style.display = "flex";
-    yearButtonsContainer.style.flexWrap = "wrap";
-    yearButtonsContainer.style.gap = "4px";
-    yearButtonsContainer.style.marginBottom = "6px";
-    yearButtonsContainer.style.marginTop = "4px";
+    const summaryText = L.DomUtil.create("span", "myc-summary-text", summaryBtn);
+    const summaryIcon = L.DomUtil.create("span", "myc-summary-icon", summaryBtn);
+    summaryIcon.innerHTML = "&#x25BE;"; // ▾
 
-    years.forEach(year => {
-      const btn = L.DomUtil.create("button", "", yearButtonsContainer);
-      btn.textContent = year;
-      btn.dataset.year = String(year);
+    summaryBtnEl = summaryBtn;
+    summaryTextEl = summaryText;
 
-      btn.style.border = "1px solid #ccc";
-      btn.style.borderRadius = "3px";
-      btn.style.padding = "2px 6px";
-      btn.style.cursor = "pointer";
-      btn.style.background = (year === selectedYear) ? "#007bff" : "#f8f9fa";
-      btn.style.color = (year === selectedYear) ? "#fff" : "#333";
-      btn.style.fontSize = "11px";
+    // --- Dropdown panel ---
+    const panel = L.DomUtil.create("div", "myc-panel", container);
+    panelEl = panel;
+
+    // --- Year header ---
+    const yearRow = L.DomUtil.create("div", "myc-year-row", panel);
+
+    const prevBtn = L.DomUtil.create("button", "myc-year-nav", yearRow);
+    prevBtn.type = "button";
+    prevBtn.innerHTML = "&#x2039;"; // ‹
+    yearPrevBtn = prevBtn;
+
+    const yearCenter = L.DomUtil.create("div", "myc-year-center", yearRow);
+
+    const yearDisplay = L.DomUtil.create("button", "myc-year-display", yearCenter);
+    yearDisplay.type = "button";
+    yearDisplay.title = "Click to type a year";
+    yearDisplayEl = yearDisplay;
+
+    const yearInput = L.DomUtil.create("input", "myc-year-input", yearCenter);
+    yearInput.type = "number";
+    yearInput.inputMode = "numeric";
+    yearInput.min = String(years[0]);
+    yearInput.max = String(years[years.length - 1]);
+    yearInput.style.display = "none";
+    yearInputEl = yearInput;
+
+    const nextBtn = L.DomUtil.create("button", "myc-year-nav", yearRow);
+    nextBtn.type = "button";
+    nextBtn.innerHTML = "&#x203A;"; // ›
+    yearNextBtn = nextBtn;
+
+    prevBtn.addEventListener("click", () => {
+      const idx = years.indexOf(selectedYear);
+      if (idx > 0) setSelectedYear(years[idx - 1], years);
+    });
+
+    nextBtn.addEventListener("click", () => {
+      const idx = years.indexOf(selectedYear);
+      if (idx >= 0 && idx < years.length - 1) setSelectedYear(years[idx + 1], years);
+    });
+
+    yearDisplay.addEventListener("click", () => {
+      enterYearEditMode(years);
+    });
+
+    // --- Month grid ---
+    const monthsGrid = L.DomUtil.create("div", "myc-month-grid", panel);
+    monthButtons = [];
+
+    MONTH_NAMES.forEach((name, idx) => {
+      const short = name.slice(0, 3);
+      const btn = L.DomUtil.create("button", "myc-month-btn", monthsGrid);
+      btn.type = "button";
+      btn.textContent = short;
+      btn.dataset.month = String(idx);
 
       btn.addEventListener("click", () => {
-        selectedYear = year;
-
-        yearButtonsContainer.querySelectorAll("button").forEach(b => {
-          const isActive = Number(b.dataset.year) === selectedYear;
-          b.style.background = isActive ? "#007bff" : "#f8f9fa";
-          b.style.color = isActive ? "#fff" : "#333";
-        });
-
-        updateMonthSliderForYear(selectedYear);
+        if (btn.disabled) return;
+        selectedMonthIndex = idx;
+        highlightSelectedMonth();
+        updateSummaryDisplay();
         updateMarkers();
       });
+
+      monthButtons.push(btn);
     });
 
-    const monthContainer = L.DomUtil.create("div", "", container);
-    monthContainer.style.marginTop = "6px";
+    // Toggle dropdown
+    const setOpen = (open) => {
+      container.classList.toggle("is-open", open);
+      if (panelEl) panelEl.style.display = open ? "block" : "none";
+    };
 
-    const label = L.DomUtil.create("label", "", monthContainer);
-    label.setAttribute("for", "slider");
-    label.textContent = "Month: ";
-
-    const monthNameSpan = L.DomUtil.create("span", "", label);
-    monthNameSpan.id = "slider-label";
-    monthNameSpan.style.fontWeight = "600";
-    monthNameSpan.textContent = MONTH_NAMES[0];
-    monthLabelEl = monthNameSpan;
-
-    const slider = L.DomUtil.create("input", "", monthContainer);
-    slider.type = "range";
-    slider.id = "slider";
-    slider.min = "0";
-    slider.max = "11";
-    slider.step = "1";
-    slider.value = "0";
-    slider.style.width = "100%";
-    slider.style.marginTop = "4px";
-    monthSlider = slider;
-
-    slider.addEventListener("input", () => {
-      updateMonthLabel();
-      updateMarkers();
+    summaryBtn.addEventListener("click", () => {
+      const open = container.classList.contains("is-open");
+      setOpen(!open);
     });
+
+    // Close when clicking map
+    map.on("click", () => setOpen(false));
+
+    // Initial render
+    yearDisplay.textContent = String(selectedYear);
+    refreshYearNav(years);
+    refreshMonthButtons();
+    highlightSelectedMonth();
+    updateSummaryDisplay();
+    setOpen(false);
 
     return container;
   };
@@ -343,92 +563,67 @@ function buildSparklineSvg(yearMeasurements) {
     return `<span style="font-size:10px; color:#888;">Not enough numeric data for graph</span>`;
   }
 
-  const sorted = [...numeric].sort((a, b) => new Date(a.date) - new Date(b.date));
-  const vals = sorted.map(m => m.value);
-  const max = Math.max(...vals);
-  const min = Math.min(...vals);
+  const values = numeric.map(m => m.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
 
-  const w = 200;
-  const h = 80;
-  const padding = 10;
-  const paddingRight = padding;
-  const paddingBottom = padding + 8;
-  const paddingTop = padding;
-
-  const minLabel = min.toFixed(2);
-  const maxLabel = max.toFixed(2);
-  const labelChars = Math.max(minLabel.length, maxLabel.length);
-  const yLabelRoom = Math.max(28, labelChars * 6);
-  const paddingLeft = padding + yLabelRoom;
+  const w = 280;
+  const h = 60;
+  const paddingLeft = 22;
+  const paddingRight = 6;
+  const paddingTop = 6;
+  const paddingBottom = 14;
 
   const innerW = w - paddingLeft - paddingRight;
   const innerH = h - paddingTop - paddingBottom;
 
-  const yForValue = (v) => {
-    const t = (max === min) ? 0.5 : (v - min) / (max - min);
-    return paddingTop + (innerH - t * innerH);
+  const normalizeY = (v) => {
+    if (max === min) return paddingTop + innerH / 2;
+    const t = (v - min) / (max - min);
+    return paddingTop + innerH - t * innerH;
   };
 
-  const xForMonth = (mIdx) => paddingLeft + (mIdx / 11) * innerW;
-
-  const positions = sorted.map((m) => {
-    const d = new Date(m.date);
-    const mIdx = d.getMonth();
-    const monthShort = d.toLocaleString("en-US", { month: "short" });
-    return { x: xForMonth(mIdx), y: yForValue(m.value), monthShort, value: m.value, monthIndex: mIdx };
+  // X positions for all 12 months
+  const monthPositions = Array.from({ length: 12 }, (_, i) => {
+    const x = paddingLeft + (i / 11) * innerW;
+    const monthShort = new Date(2020, i, 1).toLocaleString("en-US", { month: "short" });
+    return { i, x, monthShort };
   });
 
-  const xAxisEnd = paddingLeft + innerW;
+  const points = numeric.map(m => {
+    const d = new Date(m.date);
+    const mIdx = d.getMonth();
+    const x = monthPositions[mIdx].x;
+    const y = normalizeY(m.value);
+    return { x, y, value: m.value, mIdx };
+  });
 
-  const stops = positions.map((p) => {
-    const offset = innerW ? ((p.x - paddingLeft) / innerW) * 100 : 0;
-    const c = getColor(normalizeForColor(p.value));
-    return `<stop offset="${offset}%" stop-color="${c}" />`;
+  // polyline path
+  const path = points
+    .sort((a, b) => a.mIdx - b.mIdx)
+    .map(p => `${p.x},${p.y}`)
+    .join(" ");
+
+  const polylines = `<polyline fill="none" stroke="#333" stroke-width="1.5" points="${path}" />`;
+
+  const circles = points.map(p => {
+    return `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="#333" />`;
   }).join("");
 
-  const segments = [];
-  let current = [positions[0]];
+  const minLabel = `${min.toFixed(0)}`;
+  const maxLabel = `${max.toFixed(0)}`;
 
-  for (let i = 1; i < positions.length; i++) {
-    const prev = positions[i - 1];
-    const cur = positions[i];
-    const gap = cur.monthIndex - prev.monthIndex;
-
-    if (gap > 1) {
-      segments.push(current);
-      current = [cur];
-    } else {
-      current.push(cur);
-    }
-  }
-  segments.push(current);
-
-  const polylines = segments
-    .filter(seg => seg.length >= 2)
-    .map(seg => {
-      const pointsAttr = seg.map(p => `${p.x},${p.y}`).join(" ");
-      return `<polyline points="${pointsAttr}" fill="none" stroke="url(#gradLine)" stroke-width="2" />`;
-    })
-    .join("");
-
-  const circles = positions.map(p => {
-    const dotColor = getColor(normalizeForColor(p.value));
-    return `<circle cx="${p.x}" cy="${p.y}" r="2.6" fill="${dotColor}" stroke="#ffffff" stroke-width="1" />`;
-  }).join("");
-
-  const firstPos = positions[0];
-  const lastPos = positions[positions.length - 1];
+  const firstPos = monthPositions[0];
+  const lastPos = monthPositions[11];
 
   return `
-    <svg width="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow: visible;">
-      <defs>
-        <linearGradient id="gradLine" x1="${paddingLeft}" y1="0" x2="${xAxisEnd}" y2="0" gradientUnits="userSpaceOnUse">
-          ${stops}
-        </linearGradient>
-      </defs>
+    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monthly values sparkline">
+      <rect x="0" y="0" width="${w}" height="${h}" fill="white" />
 
       <line x1="${paddingLeft}" y1="${paddingTop}" x2="${paddingLeft}" y2="${paddingTop + innerH}" stroke="#cccccc" stroke-width="1" />
-      <line x1="${paddingLeft}" y1="${paddingTop + innerH}" x2="${xAxisEnd}" y2="${paddingTop + innerH}" stroke="#cccccc" stroke-width="1" />
+      <line x1="${paddingLeft}" y1="${paddingTop + innerH}" x2="${paddingLeft + innerW}" y2="${paddingTop + innerH}" stroke="#cccccc" stroke-width="1" />
+
+      <line x1="${paddingLeft - 3}" y1="${paddingTop}" x2="${paddingLeft}" y2="${paddingTop}" stroke="#cccccc" stroke-width="1" />
 
       <line x1="${paddingLeft - 3}" y1="${paddingTop + innerH / 2}" x2="${paddingLeft}" y2="${paddingTop + innerH / 2}" stroke="#cccccc" stroke-width="1" />
 
@@ -591,11 +786,12 @@ function buildPopupHtml(point, measurement, monthIndex) {
 
 function updateMarkers() {
   if (!map || !allPoints?.length || !selectedYear) return;
-  if (!monthSlider) return;
-  if (!activeMonths || activeMonths.length === 0) return;
+  if (selectedMonthIndex == null) return;
 
-  const sliderIdx = Number(monthSlider.value);
-  const monthIndex = activeMonths[sliderIdx];
+  const months = availableMonthsByYear[selectedYear] || [];
+  if (!months.includes(selectedMonthIndex)) return;
+
+  const monthIndex = selectedMonthIndex;
 
   if (!markersLayer) {
     markersLayer = L.layerGroup().addTo(map);
@@ -635,16 +831,29 @@ function updateMarkers() {
 
 // -------------------- MAP INIT --------------------
 function initMap(startCoords, startZoom) {
-  map = L.map("map").setView(startCoords, startZoom);
-  window.map = map; // handy for debugging / invalidateSize
+  // Map zonder standaard zoomcontrol
+  map = L.map("map", { zoomControl: false }).setView(startCoords, startZoom);
+  window.map = map;
 
-  // Create popup pane above controls
+  // Zoomknoppen linksonder
+  L.control.zoom({ position: "bottomleft" }).addTo(map);
+
+  // Popup pane boven controls
   map.createPane(POPUP_PANE_TOP);
   map.getPane(POPUP_PANE_TOP).style.zIndex = "5000";
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 17
   }).addTo(map);
+
+  // ✅ HIER: popup events koppelen
+  map.on("popupopen", () => {
+    setLeafletControlsHidden(true);
+  });
+
+  map.on("popupclose", () => {
+    setLeafletControlsHidden(false);
+  });
 }
 
 // -------------------- BOOTSTRAP (BOOT-DATA) --------------------
@@ -688,11 +897,26 @@ function initMap(startCoords, startZoom) {
     return;
   }
 
-  selectedYear = years[years.length - 1];
-  createUiControl(years).addTo(map);
+  // Default year: current year if available, else last available year
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  selectedYear = years.includes(currentYear) ? currentYear : years[years.length - 1];
 
-  // slider exists after UI control
-  updateMonthSliderForYear(selectedYear);
+  // Default month: current month if available in selected year, else last available month in that year
+  selectedMonthIndex = getDefaultMonthForYear(selectedYear);
+
+  createUiControl(years).addTo(map);
 
   updateMarkers();
 })();
+
+function setLeafletControlsHidden(hidden) {
+  const container = map.getContainer();
+
+  // Alle Leaflet controls (zoom, scale, custom controls)
+  container
+    .querySelectorAll(".leaflet-control-container .leaflet-control")
+    .forEach(el => {
+      el.style.display = hidden ? "none" : "";
+    });
+}
