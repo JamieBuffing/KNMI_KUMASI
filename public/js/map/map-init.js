@@ -1,8 +1,12 @@
 import { POPUP_PANE_TOP } from "./constants.js";
 
 export function initMap(state, startCoords, startZoom = 13) {
-  state.map = L.map("map").setView(startCoords, startZoom);
+  // Zet default zoomcontrol uit
+  state.map = L.map("map", { zoomControl: false }).setView(startCoords, startZoom);
   window.map = state.map;
+
+  // Voeg zoomcontrol linksonder toe
+  L.control.zoom({ position: "bottomleft" }).addTo(state.map);
 
   function setUiHidden(hidden) {
     const root = state.map.getContainer();
