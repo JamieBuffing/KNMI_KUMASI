@@ -1,17 +1,3 @@
-/* ==============================
-   HOME / INDEX (MAP PAGE)
-   ============================== */
-
-/*
-  Layout:
-  ┌───────────────────────────┐
-  │  .home-info               │  ← info boven de kaart
-  ├───────────────────────────┤
-  │  #map (Leaflet)           │  ← kaart vult resterende ruimte
-  └───────────────────────────┘
-*/
-
-/* Main wordt een kolom */
 .page-home main {
   flex: 1;
   display: flex;
@@ -21,16 +7,43 @@
   border-bottom: none;
 }
 
-/* ==============================
-   INFO BOVEN DE KAART
-   ============================== */
+/* Header */
+.page-home .site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+}
 
+.page-home .site-header__left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.page-home .site-header__right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.page-home .header-button {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* Info block above map */
 .page-home .home-info {
   color: #000;
   margin: 12px 12px 0 12px;
 }
 
-/* Titel + info knop */
 .page-home .home-title-row {
   display: flex;
   align-items: center;
@@ -45,20 +58,21 @@
   font-weight: 600;
 }
 
-/* info knop (i) */
+.page-home .home-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .page-home .info-btn {
-  float: right;
-  width: 34px;
-  height: 34px;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid rgba(0,0,0,0.2);
   background: rgba(255,255,255,0.9);
   cursor: pointer;
-
   font-weight: 700;
   font-size: 14px;
-
-  /* nieuw */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -66,16 +80,14 @@
   color: var(--color-header);
 }
 
-
-/* Subregel (bijv. NO₂ chip) */
 .page-home .home-subrow {
+  justify-content: center;
   margin-top: 6px;
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-/* Chip (NO₂) */
 .page-home .chip {
   display: inline-flex;
   align-items: center;
@@ -88,89 +100,84 @@
   color: #0b3d4d;
 }
 
-/* ==============================
-   MAP CONTAINER
-   ============================== */
-
-/* Kaart vult resterende hoogte */
+/* Map */
 .page-home #map {
   flex: 1;
   margin: 0 12px 12px 12px;
   border-radius: 12px;
   overflow: hidden;
-  position: relative; /* nodig voor Leaflet */
-}
-
-/* ==============================
-   MENU (hamburger – optioneel)
-   ============================== */
-
-.menu-control {
   position: relative;
 }
 
-/* hamburger knop */
-.menu-button {
-  font-size: 22px;
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
+/* View toggle */
+.view-toggle {
+  display: inline-flex;
+  background: #eef2f6;
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+}
 
-  background: rgba(255,255,255,0.9);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-soft);
+.view-toggle__item {
+  min-width: 90px;
+  padding: 6px 50px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
   cursor: pointer;
-}
-
-/* dropdown container */
-.menu-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-
-  background: var(--color-surface);
-  border-radius: 12px;
-  box-shadow: var(--shadow-soft);
-  padding: 6px;
-
-  display: none;
-  min-width: 140px;
-}
-
-.menu-dropdown.open {
-  display: block;
-}
-
-/* ==============================
-   MAP UI: YEAR / MONTH (legacy)
-   ============================== */
-
-.map-ui {
-  background: var(--color-surface);
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: var(--shadow-soft);
-  font-family: var(--font-base);
   font-size: 13px;
-  min-width: 160px;
-  color: #000000;
+  font-weight: 600;
+  color: #666;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.map-ui label {
-  display: block;
-  margin-bottom: 4px;
+.view-toggle__item.is-active {
+  background: #fff;
+  color: var(--color-header);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
-.map-ui input[type="range"] {
-  width: 100%;
+/* Views */
+.view-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* ==============================
-   MONTH/YEAR PICKER (top-right)
-   ============================== */
+.view {
+  display: none;
+  flex: 1;
+  overflow: hidden;
+}
 
+.view.is-active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Leaflet controls base */
+.leaflet-control {
+  transition: opacity 0.15s ease;
+}
+
+.leaflet-control.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Keep top controls from hugging edges */
+.leaflet-top .leaflet-control {
+  margin-top: 10px;
+}
+.leaflet-left .leaflet-control {
+  margin-left: 10px;
+}
+.leaflet-right .leaflet-control {
+  margin-right: 10px;
+}
+
+/* Month/Year picker (top-right) */
 .month-year-control {
   background: var(--color-surface);
   padding: 6px;
@@ -178,6 +185,8 @@
   box-shadow: var(--shadow-soft);
   font-family: var(--font-base);
   color: #000;
+  width: 160px;
+  box-sizing: border-box;
 }
 
 .myc-summary-btn {
@@ -192,17 +201,12 @@
   background: #fff;
   cursor: pointer;
   font-size: 13px;
-
-  /* 👇 nieuw: vaste/constante breedte */
-  min-width: 150px;     /* pas aan naar smaak */
   box-sizing: border-box;
 }
 
 .myc-summary-text {
   font-weight: 700;
   white-space: nowrap;
-
-  /* 👇 nieuw: tekst neemt flex ruimte, zodat knopbreedte niet springt */
   flex: 1;
   text-align: center;
 }
@@ -211,6 +215,9 @@
   font-size: 12px;
   line-height: 1;
   opacity: 0.8;
+  width: 12px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .myc-panel {
@@ -241,7 +248,6 @@
 }
 
 .myc-year-nav:disabled {
-  opacity: 1;
   cursor: not-allowed;
 }
 
@@ -304,21 +310,155 @@
 .myc-month-btn:disabled,
 .myc-month-btn.is-disabled,
 .myc-year-nav:disabled {
-  opacity: 0.8;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* ==============================
-   SCALE CONTROL (bottom-right)
-   ============================== */
+/* Tooltips for disabled items */
+.myc-month-btn.is-disabled,
+.myc-year-nav:disabled {
+  position: relative;
+}
 
+.myc-month-btn.is-disabled::after,
+.myc-year-nav:disabled::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,1);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 1000;
+}
+
+.myc-month-btn.is-disabled::before,
+.myc-year-nav:disabled::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(0,0,0,1) transparent transparent transparent;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.myc-month-btn.is-disabled:hover::after,
+.myc-month-btn.is-disabled:hover::before,
+.myc-year-nav:disabled:hover::after,
+.myc-year-nav:disabled:hover::before {
+  opacity: 1;
+}
+
+.myc-month-btn.is-disabled:active::after,
+.myc-month-btn.is-disabled:active::before,
+.myc-month-btn.is-disabled:focus-visible::after,
+.myc-month-btn.is-disabled:focus-visible::before,
+.myc-year-nav:disabled:active::after,
+.myc-year-nav:disabled:active::before,
+.myc-year-nav:disabled:focus-visible::after,
+.myc-year-nav:disabled:focus-visible::before {
+  opacity: 1;
+}
+
+/* Legend (top-left) */
+.legend-control {
+  background: rgba(255,255,255,0.95);
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+  padding: 6px;
+  font-family: var(--font-base);
+  color: #000;
+  width: 160px;
+  box-sizing: border-box;
+}
+
+.legend-summary-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 6px 10px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.legend-summary-text {
+  font-weight: 700;
+}
+
+.legend-summary-icon {
+  font-size: 12px;
+  opacity: 0.8;
+  width: 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.legend-panel {
+  margin-top: 6px;
+  display: none;
+}
+
+.legend-control.is-open .legend-panel {
+  display: block;
+}
+
+.legend-items {
+  display: grid;
+  gap: 3px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.15);
+  flex-shrink: 0;
+}
+
+.legend-text {
+  white-space: normal;
+}
+
+.legend-note {
+  margin-top: 4px;
+  font-size: 9px;
+  color: #444;
+  line-height: 1.2;
+}
+
+/* Scale control (bottom-right) */
 .scale-control {
   position: absolute;
-  bottom: -10px;    
+  bottom: -10px;
   right: -10px;
   background: rgba(255,255,255,1);
   padding: 6px 6px 20px 6px;
-  border-radius: 8px 0px 0px 0px;
+  border-radius: 8px 0 0 0;
   box-shadow: var(--shadow-soft);
   display: flex;
   gap: 6px;
@@ -344,134 +484,8 @@
   cursor: not-allowed;
 }
 
-
-/* ==============================
-   VIEW TOGGLE (Map / Table)
-   ============================== */
-
-.view-toggle {
-  display: inline-flex;
-  background: #eef2f6;
-  border-radius: 999px;
-  padding: 4px;
-  gap: 4px;
-}
-
-.view-toggle__item {
-  min-width: 90px;
-  padding: 6px 14px;
-  border-radius: 999px;
-
-  border: none;
-  background: transparent;
-  cursor: pointer;
-
-  font-size: 13px;
-  font-weight: 600;
-  color: #666;
-
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.view-toggle__item.is-active {
-  background: #ffffff;
-  color: var(--color-header);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-}
-
-/* ==============================
-   VIEW CONTAINER
-   ============================== */
-
-.view-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.view {
-  display: none;
-  flex: 1;
-  overflow: hidden;
-}
-
-.view.is-active {
-  display: flex;
-  flex-direction: column;
-}
-.leaflet-control {
-  transition: opacity 0.15s ease;
-}
-.leaflet-control.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* ==============================
-   TOOLTIP FOR DISABLED ITEMS
-   ============================== */
-
-.myc-month-btn.is-disabled,
-.myc-year-nav:disabled {
-  position: relative;
-}
-
-/* Tooltip bubble */
-.myc-month-btn.is-disabled::after,
-.myc-year-nav:disabled::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-
-  background: rgba(0, 0, 0, 1);
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 10px;
-  white-space: nowrap;
-
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  z-index: 1000;
-}
-
-/* Tooltip arrow */
-.myc-month-btn.is-disabled::before,
-.myc-year-nav:disabled::before {
-  content: "";
-  position: absolute;
-  bottom: calc(100% + 1px);
-  left: 50%;
-  transform: translateX(-50%);
-
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgba(0,0,0,1) transparent transparent transparent;
-
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-/* Desktop hover */
-.myc-month-btn.is-disabled:hover::after,
-.myc-month-btn.is-disabled:hover::before,
-.myc-year-nav:disabled:hover::after,
-.myc-year-nav:disabled:hover::before {
-  opacity: 1;
-}
-
-/* Mobile tap / keyboard */
-.myc-month-btn.is-disabled:active::after,
-.myc-month-btn.is-disabled:active::before,
-.myc-month-btn.is-disabled:focus-visible::after,
-.myc-month-btn.is-disabled:focus-visible::before,
-.myc-year-nav:disabled:active::after,
-.myc-year-nav:disabled:active::before,
-.myc-year-nav:disabled:focus-visible::after,
-.myc-year-nav:disabled:focus-visible::before {
-  opacity: 1;
+@media (max-width: 380px) {
+  .legend-control { width: 150px; }
+  .month-year-control { width: 150px; }
+  .view-toggle__item { padding: 6px 18px; }
 }

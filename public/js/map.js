@@ -1,29 +1,42 @@
 // public/js/map.js
-// Monolithic Leaflet map (no modules/imports)
 
-// -------------------- STATE --------------------
 let map;
 let markersLayer;
 
 let allPoints = [];
 let selectedYear = null;
-
 let selectedMonthIndex = null; // 0-11
 
-// UI refs
-let monthButtons = []; // 12 buttons
+let availableMonthsByYear = {};
+
+let monthButtons = [];
 let yearDisplayEl = null;
 let yearInputEl = null;
 let yearPrevBtn = null;
 let yearNextBtn = null;
-
-let summaryBtnEl = null;
-let panelEl = null;
 let summaryTextEl = null;
 
-let availableMonthsByYear = {}; // { 2025: [0,1,2], ... }
+let legendEls = null;
 
-// -------------------- CONSTANTS --------------------
+// Mongo export / API responses can include dates as ISO strings, Date objects,
+// or extended JSON like { "$date": "..." }.
+function toJsDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === "string" || typeof value === "number") {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof value === "object") {
+    const v = value.$date ?? value["$date"];
+    if (v) {
+      const d = new Date(v);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+  }
+  return null;
+}
+
 const MONTH_NAMES = [
   "January", "February", "March", "April",
   "May", "June", "July", "August",
@@ -31,8 +44,6 @@ const MONTH_NAMES = [
 ];
 
 const POPUP_PANE_TOP = "popupTop";
-
-// Units (NO2)
 const VALUE_SUFFIX = " µg/m³";
 
 const SCALE_PRESETS = {
@@ -44,7 +55,6 @@ const SCALE_PRESETS = {
 const SCALE_STORAGE_KEY = "no2ScalePreset";
 let activeScale = { ...SCALE_PRESETS.WHO };
 
-// -------------------- HELPERS --------------------
 function clamp01(x) {
   return Math.max(0, Math.min(1, x));
 }
@@ -57,20 +67,14 @@ function normalizeForColor(value) {
 }
 
 function getColor(m) {
-  // m: 0..1
   if (m <= 0.5) {
     const t = m / 0.5;
-    const r = Math.round(0 + t * 255);
-    const g = 255;
-    const b = 0;
-    return `rgb(${r},${g},${b})`; // green -> yellow
-  } else {
-    const t = (m - 0.5) / 0.5;
-    const r = 255;
-    const g = Math.round(255 - t * 255);
-    const b = 0;
-    return `rgb(${r},${g},${b})`; // yellow -> red
+    const r = Math.round(t * 255);
+    return `rgb(${r},255,0)`;
   }
+  const t = (m - 0.5) / 0.5;
+  const g = Math.round(255 - t * 255);
+  return `rgb(255,${g},0)`;
 }
 
 function getCategory(value) {
@@ -86,15 +90,10 @@ function getCategory(value) {
 function setScalePreset(key) {
   const preset = SCALE_PRESETS[key];
   if (!preset) return;
-
-  // Ignore DATA if not ready
   if (preset.key === "DATA" && (preset.colorMax == null || preset.annual == null || preset.high == null)) return;
 
   activeScale = { ...preset };
-
-  try {
-    localStorage.setItem(SCALE_STORAGE_KEY, activeScale.key);
-  } catch (_) {}
+  try { localStorage.setItem(SCALE_STORAGE_KEY, activeScale.key); } catch (_) {}
 }
 
 function applyStoredScalePreset() {
@@ -104,14 +103,13 @@ function applyStoredScalePreset() {
   } catch (_) {}
 }
 
-// -------------------- DATA UTILS --------------------
 function extractAvailableYears(points) {
   const years = new Set();
   points.forEach(point => {
     (point?.measurements || []).forEach(m => {
       if (!m?.date) return;
-      const d = new Date(m.date);
-      if (Number.isNaN(d.getTime())) return;
+      const d = toJsDate(m.date);
+      if (!d) return;
       years.add(d.getFullYear());
     });
   });
@@ -119,13 +117,12 @@ function extractAvailableYears(points) {
 }
 
 function buildAvailableMonthsByYear(points) {
-  const tmp = {}; // year -> Set(monthIndex)
+  const tmp = {};
   points.forEach(point => {
     (point?.measurements || []).forEach(m => {
       if (!m?.date) return;
-      const d = new Date(m.date);
-      if (Number.isNaN(d.getTime())) return;
-
+      const d = toJsDate(m.date);
+      if (!d) return;
       const y = d.getFullYear();
       const mo = d.getMonth();
       if (!tmp[y]) tmp[y] = new Set();
@@ -178,7 +175,100 @@ function computeDataScaleFromPoints(points) {
   };
 }
 
-// -------------------- UI: YEAR/MONTH --------------------
+/* Legend (labels depend on active scale) */
+function formatLegendLabels() {
+  const a = activeScale?.annual;
+  const h = activeScale?.high;
+
+  if (typeof a !== "number" || typeof h !== "number") {
+    return {
+      low: "—",
+      medium: "—",
+      high: "—",
+      veryHigh: "—",
+      note: "* Based on monthly average (NO₂, µg/m³)"
+    };
+  }
+
+  const highUpper = h + (h - a);
+  const r = (x) => (Math.round(x * 10) / 10).toString();
+
+  return {
+    low: `≤ ${r(a)}`,
+    medium: `> ${r(a)} – ≤ ${r(h)}`,
+    high: `> ${r(h)} – ≤ ${r(highUpper)}`,
+    veryHigh: `> ${r(highUpper)}`,
+    note: "* Based on monthly average (NO₂, µg/m³)"
+  };
+}
+
+function updateLegend() {
+  if (!legendEls) return;
+  const labels = formatLegendLabels();
+  legendEls.low.text.textContent = labels.low;
+  legendEls.med.text.textContent = labels.medium;
+  legendEls.high.text.textContent = labels.high;
+  legendEls.vhi.text.textContent = labels.veryHigh;
+  legendEls.note.textContent = labels.note;
+}
+
+function createLegendControl() {
+  const control = L.control({ position: "topleft" });
+
+  control.onAdd = function () {
+    const container = L.DomUtil.create("div", "legend-control");
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
+
+    const summaryBtn = L.DomUtil.create("button", "legend-summary-btn", container);
+    summaryBtn.type = "button";
+
+    const title = L.DomUtil.create("span", "legend-summary-text", summaryBtn);
+    title.textContent = "Legend";
+
+    const icon = L.DomUtil.create("span", "legend-summary-icon", summaryBtn);
+    icon.innerHTML = "&#x25BE;";
+
+    const panel = L.DomUtil.create("div", "legend-panel", container);
+    const items = L.DomUtil.create("div", "legend-items", panel);
+
+    function item(color) {
+      const row = L.DomUtil.create("div", "legend-item", items);
+      const dot = L.DomUtil.create("span", "legend-dot", row);
+      dot.style.background = color;
+      const text = L.DomUtil.create("span", "legend-text", row);
+      return { row, dot, text };
+    }
+
+    const low = item("rgb(0,255,0)");
+    const med = item("rgb(255,255,0)");
+    const high = item("rgb(255,165,0)");
+    const vhi = item("rgb(255,0,0)");
+    const note = L.DomUtil.create("div", "legend-note", panel);
+
+    legendEls = { low, med, high, vhi, note };
+
+    const setOpen = (open) => {
+      container.classList.toggle("is-open", open);
+      panel.style.display = open ? "block" : "none";
+    };
+
+    summaryBtn.addEventListener("click", () => {
+      setOpen(!container.classList.contains("is-open"));
+    });
+
+    map.on("click", () => setOpen(false));
+
+    updateLegend();
+    setOpen(false);
+
+    return container;
+  };
+
+  return control;
+}
+
+/* Month/Year control */
 function isValidYear(year, years) {
   return years.includes(year);
 }
@@ -186,7 +276,7 @@ function isValidYear(year, years) {
 function clampYearToAvailable(year, years) {
   if (!years.length) return null;
   if (isValidYear(year, years)) return year;
-  // choose nearest year (fallback)
+
   let nearest = years[0];
   let bestDist = Math.abs(year - nearest);
   for (const y of years) {
@@ -205,59 +295,82 @@ function getDefaultMonthForYear(year) {
 
   const now = new Date();
   const curMonth = now.getMonth();
-
-  // Prefer current month only when current year and month exists
   if (year === now.getFullYear() && months.includes(curMonth)) return curMonth;
-
-  // Otherwise last available month
   return months[months.length - 1];
 }
 
 function refreshYearNav(years) {
   if (!yearPrevBtn || !yearNextBtn) return;
+
   const idx = years.indexOf(selectedYear);
-  const prevDisabled = (idx <= 0);
-  const nextDisabled = (idx < 0 || idx >= years.length - 1);
+  const prevDisabled = idx <= 0;
+  const nextDisabled = idx < 0 || idx >= years.length - 1;
 
   yearPrevBtn.disabled = prevDisabled;
   yearNextBtn.disabled = nextDisabled;
 
-  if (prevDisabled) {
-    const msg = "No earlier year available";
-    yearPrevBtn.setAttribute("data-tooltip", msg);
-    yearPrevBtn.setAttribute("aria-label", msg);
-    yearPrevBtn.setAttribute("title", msg);
-  } else {
-    yearPrevBtn.removeAttribute("data-tooltip");
-    yearPrevBtn.removeAttribute("aria-label");
-    yearPrevBtn.removeAttribute("title");
-  }
+  const setTip = (el, disabled, msg) => {
+    if (!el) return;
+    if (disabled) {
+      el.setAttribute("data-tooltip", msg);
+      el.setAttribute("aria-label", msg);
+      el.setAttribute("title", msg);
+    } else {
+      el.removeAttribute("data-tooltip");
+      el.removeAttribute("aria-label");
+      el.removeAttribute("title");
+    }
+  };
 
-  if (nextDisabled) {
-    const msg = "No later year available";
-    yearNextBtn.setAttribute("data-tooltip", msg);
-    yearNextBtn.setAttribute("aria-label", msg);
-    yearNextBtn.setAttribute("title", msg);
-  } else {
-    yearNextBtn.removeAttribute("data-tooltip");
-    yearNextBtn.removeAttribute("aria-label");
-    yearNextBtn.removeAttribute("title");
-  }
+  setTip(yearPrevBtn, prevDisabled, "No earlier year available");
+  setTip(yearNextBtn, nextDisabled, "No later year available");
+}
+
+function refreshMonthButtons() {
+  if (!monthButtons?.length) return;
+
+  const months = availableMonthsByYear[selectedYear] || [];
+  monthButtons.forEach((btn, monthIdx) => {
+    const enabled = months.includes(monthIdx);
+    btn.disabled = !enabled;
+    btn.classList.toggle("is-disabled", !enabled);
+
+    if (!enabled) {
+      const msg = "No data available for this month";
+      btn.setAttribute("data-tooltip", msg);
+      btn.setAttribute("aria-label", msg);
+      btn.setAttribute("title", msg);
+    } else {
+      btn.removeAttribute("data-tooltip");
+      btn.removeAttribute("aria-label");
+      btn.removeAttribute("title");
+    }
+  });
+}
+
+function highlightSelectedMonth() {
+  if (!monthButtons?.length) return;
+  monthButtons.forEach((btn, i) => btn.classList.toggle("is-active", selectedMonthIndex === i));
+}
+
+function updateSummaryDisplay() {
+  if (!summaryTextEl) return;
+  const monthShort = (selectedMonthIndex != null) ? MONTH_NAMES[selectedMonthIndex].slice(0, 3) : "";
+  summaryTextEl.textContent = monthShort ? `${monthShort} ${selectedYear}` : String(selectedYear);
 }
 
 function setSelectedYear(year, years, { preserveMonth = true } = {}) {
   if (!years.length) return;
+
   const clampedYear = clampYearToAvailable(year, years);
   if (clampedYear == null) return;
 
   selectedYear = clampedYear;
-
   if (yearDisplayEl) yearDisplayEl.textContent = String(selectedYear);
 
   refreshYearNav(years);
   refreshMonthButtons();
 
-  // Month selection logic
   const months = availableMonthsByYear[selectedYear] || [];
   if (!months.length) {
     selectedMonthIndex = null;
@@ -272,56 +385,12 @@ function setSelectedYear(year, years, { preserveMonth = true } = {}) {
   updateMarkers();
 }
 
-function refreshMonthButtons() {
-  if (!monthButtons?.length) return;
-  const months = availableMonthsByYear[selectedYear] || [];
-  monthButtons.forEach((btn, monthIdx) => {
-    const enabled = months.includes(monthIdx);
-    btn.disabled = !enabled;
-    btn.classList.toggle("is-disabled", !enabled);
-    if (!enabled) {
-      btn.setAttribute("data-tooltip", "No data available for this month");
-    } else {
-      btn.removeAttribute("data-tooltip");
-    }
-  });
-}
-
-function highlightSelectedMonth() {
-  if (!monthButtons?.length) return;
-  monthButtons.forEach((btn, i) => {
-    btn.classList.toggle("is-active", selectedMonthIndex === i);
-  });
-}
-
-function updateSummaryDisplay() {
-  if (!summaryTextEl) return;
-  const monthName = (selectedMonthIndex != null) ? MONTH_NAMES[selectedMonthIndex] : "";
-  summaryTextEl.textContent = monthName ? `${monthName} ${selectedYear}` : String(selectedYear);
-}
-
-// Backwards compatibility: older code may still call this after UI creation.
-// It now refreshes month buttons/summary for the current selectedYear.
-function updateMonthSliderForYear(year) {
-  // Optional: if caller passes a year, switch to it when possible.
-  // (We avoid needing the years array here; init now sets defaults correctly.)
-  if (typeof year === "number" && !Number.isNaN(year) && availableMonthsByYear && Object.prototype.hasOwnProperty.call(availableMonthsByYear, year)) {
-    selectedYear = year;
-    if (yearDisplayEl) yearDisplayEl.textContent = String(selectedYear);
-  }
-
-  refreshMonthButtons();
-  if (selectedMonthIndex == null) selectedMonthIndex = getDefaultMonthForYear(selectedYear);
-  highlightSelectedMonth();
-  updateSummaryDisplay();
-}
-
 function tryCommitYearInput(years) {
   if (!yearInputEl) return;
+
   const raw = yearInputEl.value.trim();
   const n = Number(raw);
   if (!raw || Number.isNaN(n)) {
-    // revert
     yearInputEl.value = String(selectedYear);
     return;
   }
@@ -329,12 +398,10 @@ function tryCommitYearInput(years) {
   const y = Math.trunc(n);
   if (!isValidYear(y, years)) {
     yearInputEl.classList.add("is-invalid");
-    // revert after short delay (keeps feedback visible)
     setTimeout(() => {
-      if (yearInputEl) {
-        yearInputEl.classList.remove("is-invalid");
-        yearInputEl.value = String(selectedYear);
-      }
+      if (!yearInputEl) return;
+      yearInputEl.classList.remove("is-invalid");
+      yearInputEl.value = String(selectedYear);
     }, 600);
     return;
   }
@@ -371,8 +438,6 @@ function enterYearEditMode(years) {
 
   yearInputEl.addEventListener("keydown", onKey, { once: false });
   yearInputEl.addEventListener("blur", onBlur, { once: true });
-
-  // store handler to remove later
   yearInputEl._onKey = onKey;
 }
 
@@ -393,32 +458,26 @@ function createUiControl(years) {
 
   control.onAdd = function () {
     const container = L.DomUtil.create("div", "month-year-control");
-
     L.DomEvent.disableClickPropagation(container);
     L.DomEvent.disableScrollPropagation(container);
 
-    // --- Collapsed summary button ---
     const summaryBtn = L.DomUtil.create("button", "myc-summary-btn", container);
     summaryBtn.type = "button";
     summaryBtn.title = "Choose month and year";
 
     const summaryText = L.DomUtil.create("span", "myc-summary-text", summaryBtn);
-    const summaryIcon = L.DomUtil.create("span", "myc-summary-icon", summaryBtn);
-    summaryIcon.innerHTML = "&#x25BE;"; // ▾
-
-    summaryBtnEl = summaryBtn;
     summaryTextEl = summaryText;
 
-    // --- Dropdown panel ---
-    const panel = L.DomUtil.create("div", "myc-panel", container);
-    panelEl = panel;
+    const summaryIcon = L.DomUtil.create("span", "myc-summary-icon", summaryBtn);
+    summaryIcon.innerHTML = "&#x25BE;";
 
-    // --- Year header ---
+    const panel = L.DomUtil.create("div", "myc-panel", container);
+
     const yearRow = L.DomUtil.create("div", "myc-year-row", panel);
 
     const prevBtn = L.DomUtil.create("button", "myc-year-nav", yearRow);
     prevBtn.type = "button";
-    prevBtn.innerHTML = "&#x2039;"; // ‹
+    prevBtn.innerHTML = "&#x2039;";
     yearPrevBtn = prevBtn;
 
     const yearCenter = L.DomUtil.create("div", "myc-year-center", yearRow);
@@ -438,7 +497,7 @@ function createUiControl(years) {
 
     const nextBtn = L.DomUtil.create("button", "myc-year-nav", yearRow);
     nextBtn.type = "button";
-    nextBtn.innerHTML = "&#x203A;"; // ›
+    nextBtn.innerHTML = "&#x203A;";
     yearNextBtn = nextBtn;
 
     prevBtn.addEventListener("click", () => {
@@ -451,19 +510,15 @@ function createUiControl(years) {
       if (idx >= 0 && idx < years.length - 1) setSelectedYear(years[idx + 1], years);
     });
 
-    yearDisplay.addEventListener("click", () => {
-      enterYearEditMode(years);
-    });
+    yearDisplay.addEventListener("click", () => enterYearEditMode(years));
 
-    // --- Month grid ---
     const monthsGrid = L.DomUtil.create("div", "myc-month-grid", panel);
     monthButtons = [];
 
     MONTH_NAMES.forEach((name, idx) => {
-      const short = name.slice(0, 3);
       const btn = L.DomUtil.create("button", "myc-month-btn", monthsGrid);
       btn.type = "button";
-      btn.textContent = short;
+      btn.textContent = name.slice(0, 3);
       btn.dataset.month = String(idx);
 
       btn.addEventListener("click", () => {
@@ -477,21 +532,17 @@ function createUiControl(years) {
       monthButtons.push(btn);
     });
 
-    // Toggle dropdown
     const setOpen = (open) => {
       container.classList.toggle("is-open", open);
-      if (panelEl) panelEl.style.display = open ? "block" : "none";
+      panel.style.display = open ? "block" : "none";
     };
 
     summaryBtn.addEventListener("click", () => {
-      const open = container.classList.contains("is-open");
-      setOpen(!open);
+      setOpen(!container.classList.contains("is-open"));
     });
 
-    // Close when clicking map
     map.on("click", () => setOpen(false));
 
-    // Initial render
     yearDisplay.textContent = String(selectedYear);
     refreshYearNav(years);
     refreshMonthButtons();
@@ -505,7 +556,7 @@ function createUiControl(years) {
   return control;
 }
 
-// -------------------- UI: SCALE CONTROL (bottom-right) --------------------
+/* Scale control */
 function createScaleControl() {
   const control = L.control({ position: "bottomright" });
 
@@ -543,6 +594,7 @@ function createScaleControl() {
         if (preset.key === "DATA" && (!SCALE_PRESETS.DATA || SCALE_PRESETS.DATA.colorMax == null)) return;
         setScalePreset(preset.key);
         refresh();
+        updateLegend();
         updateMarkers();
       });
     });
@@ -554,98 +606,13 @@ function createScaleControl() {
   return control;
 }
 
-// -------------------- POPUP: SPARKLINE --------------------
-function buildSparklineSvg(yearMeasurements) {
-  const numeric = yearMeasurements
-    .filter(m => !m.noMeasurement && typeof m.value === "number" && !Number.isNaN(m.value));
-
-  if (numeric.length < 1) {
-    return `<span style="font-size:10px; color:#888;">Not enough numeric data for graph</span>`;
-  }
-
-  const values = numeric.map(m => m.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-
-  const w = 280;
-  const h = 60;
-  const paddingLeft = 22;
-  const paddingRight = 6;
-  const paddingTop = 6;
-  const paddingBottom = 14;
-
-  const innerW = w - paddingLeft - paddingRight;
-  const innerH = h - paddingTop - paddingBottom;
-
-  const normalizeY = (v) => {
-    if (max === min) return paddingTop + innerH / 2;
-    const t = (v - min) / (max - min);
-    return paddingTop + innerH - t * innerH;
-  };
-
-  // X positions for all 12 months
-  const monthPositions = Array.from({ length: 12 }, (_, i) => {
-    const x = paddingLeft + (i / 11) * innerW;
-    const monthShort = new Date(2020, i, 1).toLocaleString("en-US", { month: "short" });
-    return { i, x, monthShort };
-  });
-
-  const points = numeric.map(m => {
-    const d = new Date(m.date);
-    const mIdx = d.getMonth();
-    const x = monthPositions[mIdx].x;
-    const y = normalizeY(m.value);
-    return { x, y, value: m.value, mIdx };
-  });
-
-  // polyline path
-  const path = points
-    .sort((a, b) => a.mIdx - b.mIdx)
-    .map(p => `${p.x},${p.y}`)
-    .join(" ");
-
-  const polylines = `<polyline fill="none" stroke="#333" stroke-width="1.5" points="${path}" />`;
-
-  const circles = points.map(p => {
-    return `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="#333" />`;
-  }).join("");
-
-  const minLabel = `${min.toFixed(0)}`;
-  const maxLabel = `${max.toFixed(0)}`;
-
-  const firstPos = monthPositions[0];
-  const lastPos = monthPositions[11];
-
-  return `
-    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monthly values sparkline">
-      <rect x="0" y="0" width="${w}" height="${h}" fill="white" />
-
-      <line x1="${paddingLeft}" y1="${paddingTop}" x2="${paddingLeft}" y2="${paddingTop + innerH}" stroke="#cccccc" stroke-width="1" />
-      <line x1="${paddingLeft}" y1="${paddingTop + innerH}" x2="${paddingLeft + innerW}" y2="${paddingTop + innerH}" stroke="#cccccc" stroke-width="1" />
-
-      <line x1="${paddingLeft - 3}" y1="${paddingTop}" x2="${paddingLeft}" y2="${paddingTop}" stroke="#cccccc" stroke-width="1" />
-
-      <line x1="${paddingLeft - 3}" y1="${paddingTop + innerH / 2}" x2="${paddingLeft}" y2="${paddingTop + innerH / 2}" stroke="#cccccc" stroke-width="1" />
-
-      <text x="${paddingLeft - 4}" y="${paddingTop + 8}" font-size="8" text-anchor="end">${maxLabel}</text>
-      <text x="${paddingLeft - 4}" y="${paddingTop + innerH - 2}" font-size="8" text-anchor="end">${minLabel}</text>
-
-      <line x1="${firstPos.x}" y1="${paddingTop + innerH}" x2="${firstPos.x}" y2="${paddingTop + innerH + 5}" stroke="#888888" stroke-width="1" />
-      <line x1="${lastPos.x}"  y1="${paddingTop + innerH}" x2="${lastPos.x}"  y2="${paddingTop + innerH + 5}" stroke="#888888" stroke-width="1" />
-
-      <text x="${firstPos.x}" y="${h - 2}" font-size="8" text-anchor="middle">${firstPos.monthShort}</text>
-      <text x="${Math.min(lastPos.x, w - 8)}" y="${h - 2}" font-size="8" text-anchor="middle">${lastPos.monthShort}</text>
-
-      ${polylines}
-      ${circles}
-    </svg>
-  `;
-}
-
-// -------------------- MARKERS + POPUPS --------------------
+/* Markers */
 function createMarkerIcon(color) {
   return L.divIcon({
-    className: "custom-marker",
+    // Leaflet disables pointer-events on marker icons unless they are marked
+    // as interactive. In some setups `DivIcon` doesn't always receive the
+    // `leaflet-interactive` class automatically, so we include it explicitly.
+    className: "custom-marker leaflet-interactive",
     html: `<div style="
       width: 20px;
       height: 20px;
@@ -662,126 +629,125 @@ function createMarkerIcon(color) {
 function findMeasurement(point, year, monthIndex) {
   return (point.measurements || []).find(m => {
     if (!m?.date) return false;
-    const d = new Date(m.date);
-    if (Number.isNaN(d.getTime())) return false;
+    const d = toJsDate(m.date);
+    if (!d) return false;
     return d.getFullYear() === year && d.getMonth() === monthIndex;
   });
 }
 
-function buildPopupHtml(point, measurement, monthIndex) {
-  const lat = point.coordinates.lat;
-  const lon = point.coordinates.lon;
+/* Popup sparkline + popup HTML */
+function buildSparklineSvg(monthValues) {
+  // monthValues: length 12 array of numbers or null
+  const w = 280;
+  const h = 56;
+  const pad = 6;
 
-  const title = point.location || point.description || "Measurement point";
-  const description = point.description || "";
-  const dateStr = new Date(measurement.date).toISOString().slice(0, 10);
-  const isNo = !!measurement.noMeasurement;
-
-  const yearMeasurements = (point.measurements || [])
-    .filter(m => {
-      if (!m?.date) return false;
-      const d = new Date(m.date);
-      return !Number.isNaN(d.getTime()) && d.getFullYear() === selectedYear;
-    })
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  let color = "rgb(200,200,200)";
-  let value = null;
-
-  if (!isNo) {
-    value = measurement.value;
-    color = getColor(normalizeForColor(value));
+  const vals = monthValues.filter(v => typeof v === "number" && !Number.isNaN(v));
+  if (!vals.length) {
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-label="No data" role="img">
+      <text x="${w / 2}" y="${h / 2}" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#666">No yearly data</text>
+    </svg>`;
   }
 
-  const category = isNo ? "No measurement possible" : getCategory(value);
-  const sparklineSvg = buildSparklineSvg(yearMeasurements);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const range = Math.max(0.0001, max - min);
 
-  const chipsHtml =
-    yearMeasurements.length
-      ? yearMeasurements.map(m => {
-          const d = new Date(m.date);
-          const monthName = d.toLocaleString("en-US", { month: "short" });
-          const mIdx = d.getMonth();
+  const xStep = (w - pad * 2) / 11;
+  const toY = (v) => {
+    const t = (v - min) / range;
+    return (h - pad) - t * (h - pad * 2);
+  };
 
-          const isSelectedMonth = mIdx === monthIndex;
-          const borderColor = isSelectedMonth ? "#000000" : "#e0e0e0";
-          const fontWeight = isSelectedMonth ? "600" : "400";
+  const points = monthValues.map((v, i) => {
+    const x = pad + i * xStep;
+    const y = (typeof v === "number" && !Number.isNaN(v)) ? toY(v) : null;
+    return { x, y };
+  });
 
-          const isNoChip = !!m.noMeasurement || typeof m.value !== "number" || Number.isNaN(m.value);
-          const chipColor = isNoChip ? "rgb(200,200,200)" : getColor(normalizeForColor(m.value));
-          const chipText = isNoChip ? `${monthName}: n/a` : `${monthName}: ${m.value.toFixed(2)}${VALUE_SUFFIX}`;
+  // Build a polyline with gaps: split into segments where y != null
+  const segments = [];
+  let cur = [];
+  for (const p of points) {
+    if (p.y == null) {
+      if (cur.length >= 2) segments.push(cur);
+      cur = [];
+    } else {
+      cur.push(p);
+    }
+  }
+  if (cur.length >= 2) segments.push(cur);
 
-          return `
-            <span style="
-              background:${chipColor};
-              border-radius:999px;
-              padding:2px 6px;
-              font-size:10px;
-              border:2px solid ${borderColor};
-              font-weight:${fontWeight};
-              color:#000000;
-            ">${chipText}</span>
-          `;
-        }).join("")
-      : '<span style="font-size:10px; color:#888;">No data for this year</span>';
+  const segmentEls = segments.map(seg => {
+    const pts = seg.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+    return `<polyline points="${pts}" fill="none" stroke="#0b3d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />`;
+  }).join("");
 
-  const valueBlock = isNo
-    ? `
-      <div style="font-size: 10px; text-transform: uppercase; color:#888;">Value</div>
-      <div style="
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 999px;
-        border: 1px solid rgba(0,0,0,0.15);
-        background: rgb(200,200,200);
-        font-weight: 600;
-      ">n/a</div>
-    `
-    : `
-      <div style="font-size: 10px; text-transform: uppercase; color:#888;">Value</div>
-      <div style="
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 999px;
-        border: 1px solid rgba(0,0,0,0.15);
-        background: ${color};
-        font-weight: 600;
-      ">${value.toFixed(2)}${VALUE_SUFFIX}</div>
-    `;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Year trend">
+    <rect x="0" y="0" width="${w}" height="${h}" rx="10" ry="10" fill="#f4f6f8" />
+    <line x1="${pad}" y1="${h - pad}" x2="${w - pad}" y2="${h - pad}" stroke="#d0d6dc" stroke-width="1" />
+    ${segmentEls}
+  </svg>`;
+}
+
+function buildPopupHtml(point, measurement, monthIndex) {
+  const location = point?.location || point?.name || `Point ${point?.point_number ?? ""}`.trim();
+  const city = point?.city ? `, ${point.city}` : "";
+
+  const monthName = MONTH_NAMES[monthIndex] || "";
+  const year = selectedYear;
+
+  const isNo = !!measurement?.noMeasurement;
+  const value = (!isNo && typeof measurement?.value === "number" && !Number.isNaN(measurement.value))
+    ? measurement.value
+    : null;
+
+  const category = value != null ? getCategory(value) : "No measurement";
+
+  // Collect values for the selected year (12 months)
+  const monthValues = new Array(12).fill(null);
+  (point?.measurements || []).forEach(m => {
+    const d = toJsDate(m?.date);
+    if (!d) return;
+    if (d.getFullYear() !== year) return;
+    const mo = d.getMonth();
+    if (typeof m.value === "number" && !Number.isNaN(m.value)) monthValues[mo] = m.value;
+  });
+
+  const spark = buildSparklineSvg(monthValues);
+
+  const valueHtml = (value == null)
+    ? `<span class="popup-value popup-value--na">—</span>`
+    : `<span class="popup-value">${value.toFixed(2)}${VALUE_SUFFIX}</span>`;
 
   return `
-    <div style="font-family: Arial, sans-serif; font-size: 12px; max-width: 300px;">
-      <h4 style="margin: 0 0 4px; font-size: 14px;">${title}</h4>
-
-      ${description ? `<div style="font-size: 11px; color:#666; margin-bottom: 6px;">${description}</div>` : ""}
-
-      <div style="display: flex; gap: 10px; margin-bottom: 6px;">
-        <div style="flex: 1;">${valueBlock}</div>
-        <div style="flex: 1;">
-          <div style="font-size: 10px; text-transform: uppercase; color:#888;">Month</div>
-          <div>${dateStr}</div>
-        </div>
+    <div class="popup">
+      <div class="popup-header">
+        <div class="popup-title">${escapeHtml(location)}${escapeHtml(city)}</div>
+        <div class="popup-sub">${escapeHtml(monthName)} ${escapeHtml(String(year))}</div>
       </div>
 
-      <div style="font-size: 11px; color:#555; margin-bottom: 6px;">
-        <span style="font-size:10px; text-transform:uppercase; color:#888;">${activeScale.label} context</span><br>
-        <strong>${category}</strong>
+      <div class="popup-metric">
+        ${valueHtml}
+        <div class="popup-category">${escapeHtml(category)}</div>
       </div>
 
-      <div style="margin-bottom: 6px;">
-        <div style="font-size:10px; text-transform:uppercase; color:#888; margin-bottom:4px;">
-          Monthly values in ${selectedYear}
-        </div>
-        <div style="margin-bottom:4px;">${sparklineSvg}</div>
-        <div style="display:flex; flex-wrap:wrap; gap:4px;">${chipsHtml}</div>
+      <div class="popup-spark">
+        ${spark}
       </div>
 
-      <div style="font-size: 10px; color:#666; display:flex; justify-content:space-between;">
-        <span>Lat: ${lat.toFixed(4)}</span>
-        <span>Lon: ${lon.toFixed(4)}</span>
-      </div>
+      ${point?.description ? `<div class="popup-desc">${escapeHtml(point.description)}</div>` : ""}
     </div>
   `;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function updateMarkers() {
@@ -793,11 +759,8 @@ function updateMarkers() {
 
   const monthIndex = selectedMonthIndex;
 
-  if (!markersLayer) {
-    markersLayer = L.layerGroup().addTo(map);
-  } else {
-    markersLayer.clearLayers();
-  }
+  if (!markersLayer) markersLayer = L.layerGroup().addTo(map);
+  else markersLayer.clearLayers();
 
   allPoints.forEach(point => {
     const lat = point?.coordinates?.lat;
@@ -808,8 +771,8 @@ function updateMarkers() {
     if (!measurement) return;
 
     const isNo = !!measurement.noMeasurement;
-
     let color = "rgb(160,160,160)";
+
     if (!isNo) {
       const value = measurement.value;
       if (typeof value !== "number" || Number.isNaN(value)) return;
@@ -818,45 +781,54 @@ function updateMarkers() {
 
     const icon = createMarkerIcon(color);
 
-    L.marker([lat, lon], { icon })
+    const marker = L.marker([lat, lon], {
+      icon,
+      interactive: true,
+      keyboard: false,
+      // Don't bubble the click to the map; avoids any map-level click handlers
+      // accidentally interfering with marker interaction.
+      bubblingMouseEvents: false
+    })
       .addTo(markersLayer)
-      .bindPopup(() => buildPopupHtml(point, measurement, monthIndex), {
+      .bindPopup(() => {
+        // Leaflet expects popup content to be a string or a DOM Node.
+        // If something inside buildPopupHtml throws, Leaflet will receive
+        // `undefined` and attempt to appendChild it, causing:
+        // "Failed to execute 'appendChild' on 'Node'".
+        try {
+          return String(buildPopupHtml(point, measurement, monthIndex));
+        } catch (err) {
+          console.error("Popup render error:", err);
+          return "<div class=\"popup\"><strong>Popup error</strong><div style=\"margin-top:6px\">Kon details niet laden.</div></div>";
+        }
+      }, {
         pane: POPUP_PANE_TOP,
         minWidth: 320,
         maxWidth: 320,
         autoPanPadding: [10, 10]
       });
+
+    // Extra safety: ensure click always opens popup.
+    marker.on("click", () => marker.openPopup());
   });
 }
 
-// -------------------- MAP INIT --------------------
+/* Map init + boot */
 function initMap(startCoords, startZoom) {
-  // Map zonder standaard zoomcontrol
   map = L.map("map", { zoomControl: false }).setView(startCoords, startZoom);
   window.map = map;
 
-  // Zoomknoppen linksonder
   L.control.zoom({ position: "bottomleft" }).addTo(map);
 
-  // Popup pane boven controls
   map.createPane(POPUP_PANE_TOP);
   map.getPane(POPUP_PANE_TOP).style.zIndex = "5000";
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 17
-  }).addTo(map);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 17 }).addTo(map);
 
-  // ✅ HIER: popup events koppelen
-  map.on("popupopen", () => {
-    setLeafletControlsHidden(true);
-  });
-
-  map.on("popupclose", () => {
-    setLeafletControlsHidden(false);
-  });
+  map.on("popupopen", () => setLeafletControlsHidden(true));
+  map.on("popupclose", () => setLeafletControlsHidden(false));
 }
 
-// -------------------- BOOTSTRAP (BOOT-DATA) --------------------
 (function initFromBootData() {
   const bootEl = document.getElementById("boot-data");
   const boot = bootEl ? JSON.parse(bootEl.textContent) : { keuzes: {}, points: [] };
@@ -869,54 +841,43 @@ function initMap(startCoords, startZoom) {
 
   initMap(startCoords, 13);
 
-  // filter safe points
   allPoints = pointsRaw.filter(p => {
     const lat = p?.coordinates?.lat;
     const lon = p?.coordinates?.lon;
     return (typeof lat === "number" && !Number.isNaN(lat) && typeof lon === "number" && !Number.isNaN(lon));
   });
 
-  // compute DATA preset
   const dataScale = computeDataScaleFromPoints(allPoints);
   if (dataScale) SCALE_PRESETS.DATA = dataScale;
 
-  // default + stored preset
   setScalePreset("WHO");
   applyStoredScalePreset();
 
-  // UI controls
   const years = extractAvailableYears(allPoints);
   availableMonthsByYear = buildAvailableMonthsByYear(allPoints);
 
-  // Scale control bottom-right
+  createLegendControl().addTo(map);
   createScaleControl().addTo(map);
 
-  if (years.length === 0) {
-    console.warn("No years found in measurement data");
+  if (!years.length) {
     updateMarkers();
     return;
   }
 
-  // Default year: current year if available, else last available year
   const now = new Date();
   const currentYear = now.getFullYear();
   selectedYear = years.includes(currentYear) ? currentYear : years[years.length - 1];
-
-  // Default month: current month if available in selected year, else last available month in that year
   selectedMonthIndex = getDefaultMonthForYear(selectedYear);
 
   createUiControl(years).addTo(map);
 
+  updateLegend();
   updateMarkers();
 })();
 
 function setLeafletControlsHidden(hidden) {
   const container = map.getContainer();
-
-  // Alle Leaflet controls (zoom, scale, custom controls)
   container
     .querySelectorAll(".leaflet-control-container .leaflet-control")
-    .forEach(el => {
-      el.style.display = hidden ? "none" : "";
-    });
+    .forEach(el => { el.style.display = hidden ? "none" : ""; });
 }
