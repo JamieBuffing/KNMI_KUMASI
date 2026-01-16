@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+  loadtable()
   const toggle = document.querySelector("[data-view-toggle]");
   if (!toggle) return;
 

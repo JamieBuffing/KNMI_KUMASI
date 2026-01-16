@@ -1562,3 +1562,29 @@ function setLeafletControlsHidden(hidden) {
     .querySelectorAll(".leaflet-control-container .leaflet-control")
     .forEach(el => { el.style.display = hidden ? "none" : ""; });
 }
+
+function loadtable() {
+  const bootEl = document.getElementById("boot-data");
+  const boot = bootEl ? JSON.parse(bootEl.textContent) : { keuzes: {}, points: [] };
+
+  const keuzes = boot.keuzes || {};
+  const pointsRaw = Array.isArray(boot.points) ? boot.points : [];
+
+  const tabel = document.getElementById("tableData");
+
+  pointsRaw.forEach((point) => {
+    const row1 = document.createElement("tr")
+    const rowHeader = document.createElement("hd")
+    rowHeader.innerHTML = `
+      <span style="color: ${getColor(normalizeForColor(point.value))}>
+      <p id="name">${point.location}</p>
+    `
+    
+    const row2 = document.createElement("tr")
+
+    
+    const row3 = document.createElement("tr")
+    row1.append(rowHeader)
+    tabel.append(row1, row2, row3)
+  })
+}
