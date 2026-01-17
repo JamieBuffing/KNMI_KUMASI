@@ -154,7 +154,8 @@ body.overlay-open { overflow: hidden; }
 .overlay__backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
 .overlay__panel {
     color: #0f172a;
-    height: 90vh;
+    height: 80vh;
+    margin-top: 5vh;
     overflow-y: scroll;
   position: absolute; left: 50%; top: 50%;
   transform: translate(-50%, -50%);
