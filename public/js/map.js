@@ -1,5 +1,4 @@
 // public/js/map.js
-
 let map;
 let markersLayer;
 
@@ -1564,27 +1563,140 @@ function setLeafletControlsHidden(hidden) {
 }
 
 function loadtable() {
+  // Card-list table view (month select + sort + search)
   const bootEl = document.getElementById("boot-data");
   const boot = bootEl ? JSON.parse(bootEl.textContent) : { keuzes: {}, points: [] };
 
-  const keuzes = boot.keuzes || {};
   const pointsRaw = Array.isArray(boot.points) ? boot.points : [];
 
-  const tabel = document.getElementById("tableData");
+  const monthSelect = document.getElementById("tableMonth");
+  const sortSelect = document.getElementById("tableSort");
+  const searchInput = document.getElementById("tableSearch");
+  const listEl = document.getElementById("tableList");
+  if (!monthSelect || !sortSelect || !searchInput || !listEl) return;
 
-  pointsRaw.forEach((point) => {
-    const row1 = document.createElement("tr")
-    const rowHeader = document.createElement("hd")
-    rowHeader.innerHTML = `
-      <span style="color: ${getColor(normalizeForColor(point.value))}>
-      <p id="name">${point.location}</p>
-    `
-    
-    const row2 = document.createElement("tr")
+  // Build available month options across all points
+  const monthSet = new Set();
+  pointsRaw.forEach(pt => {
+    (pt?.measurements || []).forEach(m => {
+      const d = toJsDate(m?.date);
+      if (!d) return;
+      monthSet.add(`${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`);
+    });
+  });
 
-    
-    const row3 = document.createElement("tr")
-    row1.append(rowHeader)
-    tabel.append(row1, row2, row3)
-  })
+  const monthKeys = Array.from(monthSet)
+    .map(k => {
+      const [y, mo] = k.split("-");
+      return { y: Number(y), m: Number(mo), key: k };
+    })
+    .filter(x => Number.isFinite(x.y) && Number.isFinite(x.m))
+    .sort((a, b) => (b.y - a.y) || (b.m - a.m));
+
+  // Fill month dropdown
+  monthSelect.innerHTML = "";
+  monthKeys.forEach(({ y, m, key }) => {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = `${MONTH_NAMES[m]} ${y}`;
+    monthSelect.appendChild(opt);
+  });
+
+  // Default: latest month if available
+  if (monthKeys.length) monthSelect.value = monthKeys[0].key;
+
+  function parseMonthKey(key) {
+    const [y, mo] = String(key || "").split("-");
+    return { year: Number(y), monthIndex: Number(mo) };
+  }
+
+  function fmtValue(v) {
+    return (typeof v === "number" && !Number.isNaN(v)) ? `${v.toFixed(1)}${VALUE_SUFFIX}` : "—";
+  }
+
+  function render() {
+    const { year, monthIndex } = parseMonthKey(monthSelect.value);
+    const q = searchInput.value.trim().toLowerCase();
+    const sortKey = sortSelect.value;
+
+    const items = pointsRaw.map((pt) => {
+      const location = pt?.location || pt?.name || pt?.description || "Unknown location";
+      const city = pt?.city || pt?.area || pt?.region || "";
+
+      const measurement = (Number.isFinite(year) && Number.isFinite(monthIndex))
+        ? findMeasurement(pt, year, monthIndex)
+        : null;
+
+      const isNo = !!measurement?.noMeasurement;
+      const value = (!isNo && typeof measurement?.value === "number" && !Number.isNaN(measurement.value))
+        ? measurement.value
+        : null;
+
+      const meta = getLevelMeta(value, isNo);
+
+      return {
+        pt,
+        location,
+        city,
+        year,
+        monthIndex,
+        value,
+        level: meta.label,
+        accent: meta.accent
+      };
+    }).filter(item => {
+      if (!q) return true;
+      return (
+        item.location.toLowerCase().includes(q) ||
+        (item.city && item.city.toLowerCase().includes(q))
+      );
+    });
+
+    const valueOrNegInf = (v) => (typeof v === "number" && !Number.isNaN(v)) ? v : -Infinity;
+    const valueOrPosInf = (v) => (typeof v === "number" && !Number.isNaN(v)) ? v : Infinity;
+
+    items.sort((a, b) => {
+      if (sortKey === "no2_desc") return valueOrNegInf(b.value) - valueOrNegInf(a.value);
+      if (sortKey === "no2_asc") return valueOrPosInf(a.value) - valueOrPosInf(b.value);
+      if (sortKey === "name_desc") return b.location.localeCompare(a.location);
+      return a.location.localeCompare(b.location);
+    });
+
+    if (!items.length) {
+      listEl.innerHTML = `<div style="padding:10px; color:#0b3d4d; font-weight:600;">No results</div>`;
+      return;
+    }
+
+    const monthLabel = (Number.isFinite(monthIndex) && MONTH_NAMES[monthIndex]) ? MONTH_NAMES[monthIndex] : "";
+
+    listEl.innerHTML = items.map((item, idx) => {
+      const dot = item.accent || "#94A3B8";
+      const levelColor = item.accent || "#334155";
+
+      const metaLeft = item.city ? `${escapeHtml(item.city)} · ` : "";
+      const metaText = `${metaLeft}${escapeHtml(monthLabel)} ${escapeHtml(String(item.year || ""))}`.trim();
+
+      return `
+        <div class="table-card" role="button" tabindex="0" data-idx="${idx}">
+          <div class="table-card__title">
+            <span class="table-dot" style="background:${dot}"></span>
+            <span>${escapeHtml(item.location)}</span>
+          </div>
+
+          <div class="table-card__metric">
+            NO₂ : <strong>${escapeHtml(fmtValue(item.value))}</strong>
+            · <span class="table-level" style="color:${levelColor}">${escapeHtml(item.level)}</span>
+          </div>
+
+          <div class="table-card__meta">${metaText}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  monthSelect.addEventListener("change", render);
+  sortSelect.addEventListener("change", render);
+  searchInput.addEventListener("input", render);
+
+  render();
 }

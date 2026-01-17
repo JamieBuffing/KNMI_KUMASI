@@ -38,54 +38,21 @@
   line-height: 1;
 }
 
-/* Info block above map */
-.page-home .home-info {
-  color: #000;
-  margin: 12px 12px 0 12px;
-}
-
-.page-home .home-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.page-home .home-title-row h2 {
-  font-size: 18px;
-  margin: 0;
-  color: var(--color-header);
-  font-weight: 600;
-}
-
-.page-home .home-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
+/* Info / title row */
 .page-home .info-btn {
-  padding: 4px 10px;
-  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
   border: 1px solid rgba(0,0,0,0.2);
   background: rgba(255,255,255,0.9);
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
   color: var(--color-header);
-}
-
-.page-home .home-subrow {
-  justify-content: center;
-  margin-top: 6px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  text-decoration: none;
 }
 
 .page-home .chip {
@@ -100,26 +67,19 @@
   color: #0b3d4d;
 }
 
-/* Map */
-.page-home #map {
-  flex: 1;
-  margin: 0 12px 12px 12px;
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-}
-
 /* View toggle */
 .view-toggle {
   display: inline-flex;
   background: #eef2f6;
   border-radius: 999px;
   padding: 4px;
+  margin-top: 10px;
   gap: 4px;
+  width: 100%;
 }
 
-.view-toggle__item {
-  min-width: 90px;
+.viewSwitch {
+  width: 50%;
   padding: 6px 50px;
   border-radius: 999px;
   border: none;
@@ -128,364 +88,58 @@
   font-size: 13px;
   font-weight: 600;
   color: #666;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-.view-toggle__item.is-active {
+.active {
   background: #fff;
   color: var(--color-header);
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-/* Views */
-.view-container {
-  flex: 1;
+.home-layout {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  height: 100vh; /* volledige schermhoogte */
+  padding: 10px;
 }
 
-.view {
-  display: none;
+/* Map container */
+.page-home #map {
   flex: 1;
-  overflow: hidden;
-}
-
-.view.is-active {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Leaflet controls base */
-.leaflet-control {
-  transition: opacity 0.15s ease;
-}
-
-.leaflet-control.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Keep top controls from hugging edges */
-.leaflet-top .leaflet-control {
-  margin-top: 10px;
-}
-.leaflet-left .leaflet-control {
-  margin-left: 10px;
-}
-.leaflet-right .leaflet-control {
-  margin-right: 10px;
-}
-
-/* Month/Year picker (top-right) */
-.month-year-control {
-  background: var(--color-surface);
-  padding: 6px;
   border-radius: 12px;
-  box-shadow: var(--shadow-soft);
-  font-family: var(--font-base);
-  color: #000;
-  width: 160px;
-  box-sizing: border-box;
-}
-
-.myc-summary-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 6px 10px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 13px;
-  box-sizing: border-box;
-}
-
-.myc-summary-text {
-  font-weight: 700;
-  white-space: nowrap;
-  flex: 1;
-  text-align: center;
-}
-
-.myc-summary-icon {
-  font-size: 12px;
-  line-height: 1;
-  opacity: 0.8;
-  width: 12px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.myc-panel {
-  margin-top: 6px;
-  display: none;
-}
-
-.month-year-control.is-open .myc-panel {
-  display: block;
-}
-
-.myc-year-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.myc-year-nav {
-  width: 26px;
-  height: 26px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #f8f9fa;
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-}
-
-.myc-year-nav:disabled {
-  cursor: not-allowed;
-}
-
-.myc-year-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-.myc-year-display {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 4px 10px;
-  background: #fff;
-  font-weight: 700;
-  cursor: text;
-  font-size: 13px;
-}
-
-.myc-year-input {
-  width: 88px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 4px 8px;
-  text-align: center;
-  font-weight: 700;
-  outline: none;
-  font-size: 13px;
-}
-
-.myc-year-input:focus {
-  border-color: #007bff;
-}
-
-.myc-year-input.is-invalid {
-  border-color: #dc3545;
-}
-
-.myc-month-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-}
-
-.myc-month-btn {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 5px 0;
-  font-size: 11px;
-  background: #f8f9fa;
-  cursor: pointer;
-}
-
-.myc-month-btn.is-active {
-  background: #007bff;
-  color: #fff;
-  border-color: #007bff;
-}
-
-.myc-month-btn:disabled,
-.myc-month-btn.is-disabled,
-.myc-year-nav:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-/* Tooltips for disabled items */
-.myc-month-btn.is-disabled,
-.myc-year-nav:disabled {
+  overflow: hidden;
   position: relative;
 }
 
-.myc-month-btn.is-disabled::after,
-.myc-year-nav:disabled::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,1);
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 10px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  z-index: 1000;
+#controls {
+  flex-shrink: 0; /* blijft zo hoog als nodig */
 }
 
-.myc-month-btn.is-disabled::before,
-.myc-year-nav:disabled::before {
-  content: "";
-  position: absolute;
-  bottom: calc(100% + 1px);
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgba(0,0,0,1) transparent transparent transparent;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.myc-month-btn.is-disabled:hover::after,
-.myc-month-btn.is-disabled:hover::before,
-.myc-year-nav:disabled:hover::after,
-.myc-year-nav:disabled:hover::before {
-  opacity: 1;
-}
-
-.myc-month-btn.is-disabled:active::after,
-.myc-month-btn.is-disabled:active::before,
-.myc-month-btn.is-disabled:focus-visible::after,
-.myc-month-btn.is-disabled:focus-visible::before,
-.myc-year-nav:disabled:active::after,
-.myc-year-nav:disabled:active::before,
-.myc-year-nav:disabled:focus-visible::after,
-.myc-year-nav:disabled:focus-visible::before {
-  opacity: 1;
-}
-
-/* Legend (top-left) */
-.legend-control {
-  background: rgba(255,255,255,0.95);
-  border: 1px solid rgba(0,0,0,0.12);
-  border-radius: 12px;
-  box-shadow: var(--shadow-soft);
-  padding: 6px;
-  font-family: var(--font-base);
-  color: #000;
-  width: 160px;
-  box-sizing: border-box;
-}
-
-.legend-summary-btn {
-  width: 100%;
+#view {
+  flex: 1;               /* neemt alle resterende ruimte */
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 6px 10px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 13px;
+  overflow: hidden;      /* voorkomt scrollbars */
 }
 
-.legend-summary-text {
-  font-weight: 700;
+/* optioneel, maar sterk aanbevolen */
+#mapView {
+  flex: 1;
+  display: flex;
+  min-height: 320px; /* of wat jij fijn vindt */
 }
-
-.legend-summary-icon {
-  font-size: 12px;
-  opacity: 0.8;
-  width: 12px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.legend-panel {
-  margin-top: 6px;
+#tableView {
   display: none;
+  width: 100%;
 }
 
-.legend-control.is-open .legend-panel {
-  display: block;
-}
-
-.legend-items {
-  display: grid;
-  gap: 3px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  line-height: 1.1;
-}
-
-.legend-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.15);
-  flex-shrink: 0;
-}
-
-.legend-text {
-  white-space: normal;
-}
-
-.legend-note {
-  margin-top: 4px;
-  font-size: 9px;
-  color: #444;
-  line-height: 1.2;
-}
-
-/* Scale control (bottom-right) */
-.scale-control {
-  position: absolute;
-  bottom: -10px;
-  right: -10px;
-  background: rgba(255,255,255,1);
-  padding: 6px 6px 20px 6px;
-  border-radius: 8px 0 0 0;
-  box-shadow: var(--shadow-soft);
-  display: flex;
-  gap: 6px;
-}
-
-.scale-control button {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 11px;
-  cursor: pointer;
-  background: #f8f9fa;
-  color: #333;
-}
-
-.scale-control button.is-active {
-  background: #007bff;
-  color: #fff;
-}
-
-.scale-control button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-@media (max-width: 380px) {
-  .legend-control { width: 150px; }
-  .month-year-control { width: 150px; }
-  .view-toggle__item { padding: 6px 18px; }
+#map {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 320px; /* extra safety */
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
 }
