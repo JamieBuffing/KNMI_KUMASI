@@ -689,9 +689,7 @@ function updateMarkers() {
       fillOpacity: 1
     }).addTo(markerLayer);
 
-    marker.on("click", () => {
-      openPointOverlay(p, year, monthIndex);
-    });
+    marker.on("click", () => openPointOverlay(p, year, monthIndex));
   });
 }
 
@@ -922,6 +920,303 @@ function openPointOverlay(point, year, monthIndex) {
   overlay.hidden = false;
   document.body.classList.add("overlay-open");
 
+  drawOverlayChart({ point, year, monthIndex });
+
   // Later: hier kun je meteen D3 initten met data:
   // drawOverlayChart({ point, year, rows: allRows });
+}
+
+function formatShortMonth(row) {
+  const mon = monthNames[row.monthIndex].slice(0, 3);
+  return `${mon} ${String(row.year).slice(2)}`;
+}
+
+function drawOverlayChart({ point, year, monthIndex }) {
+  const host = document.getElementById("overlayChart");
+  if (!host) return;
+
+  // cleanup vorige chart + outside-click handler
+  if (host._chartCleanup) {
+    host._chartCleanup();
+    host._chartCleanup = null;
+  }
+
+  host.innerHTML = "";
+
+  if (typeof d3 === "undefined") {
+    host.textContent = "D3 is not loaded";
+    return;
+  }
+
+  const max = activeScale?.colorMax ?? maxValue ?? 0;
+  if (!max) {
+    host.textContent = "No scale max available";
+    return;
+  }
+
+  // --- tooltip helpers (werkt voor desktop + mobiel) ---
+  const ensureChartTooltip = () => {
+    let tip = document.getElementById("chartTooltip");
+    if (tip) return tip;
+
+    tip = document.createElement("div");
+    tip.id = "chartTooltip";
+    tip.style.position = "fixed";
+    tip.style.zIndex = "10000";
+    tip.style.pointerEvents = "none";
+    tip.style.padding = "6px 8px";
+    tip.style.borderRadius = "10px";
+    tip.style.background = "rgba(15, 23, 42, 0.92)";
+    tip.style.color = "#fff";
+    tip.style.fontSize = "12px";
+    tip.style.lineHeight = "1.2";
+    tip.style.boxShadow = "0 10px 30px rgba(0,0,0,.25)";
+    tip.style.opacity = "0";
+    tip.style.transform = "translate(-50%, -120%)";
+    tip.style.transition = "opacity 120ms ease";
+    document.body.appendChild(tip);
+
+    return tip;
+  };
+
+  const showChartTooltip = (text, clientX, clientY) => {
+    const tip = ensureChartTooltip();
+    tip.textContent = text;
+
+    // kleine offset zodat hij niet onder je vinger zit
+    const x = clientX;
+    const y = clientY;
+
+    tip.style.left = `${x}px`;
+    tip.style.top = `${y}px`;
+    tip.style.opacity = "1";
+  };
+
+  const hideChartTooltip = () => {
+    const tip = document.getElementById("chartTooltip");
+    if (!tip) return;
+    tip.style.opacity = "0";
+  };
+
+  let tooltipPinned = false;
+
+  const onDocPointerDown = (e) => {
+    // klik/tap buiten de chart => sluit tooltip
+    if (!tooltipPinned) return;
+    if (host.contains(e.target)) return;
+    tooltipPinned = false;
+    hideChartTooltip();
+  };
+
+  document.addEventListener("pointerdown", onDocPointerDown, { passive: true });
+
+  host._chartCleanup = () => {
+    document.removeEventListener("pointerdown", onDocPointerDown, { passive: true });
+  };
+
+  // --- Data window: 5 vóór + selected + 5 ná ---
+  const allRows = getSortedMonthlyMeasurements(point);
+  const { windowRows } = buildWindowAround(allRows, year, monthIndex, 5, 5);
+
+  if (!windowRows.length) {
+    host.textContent = "No data";
+    return;
+  }
+
+  // --- Sizes ---
+  const W = host.clientWidth || 460;
+  const H = 140;
+  const margin = { top: 10, right: 10, bottom: 26, left: 34 };
+  const innerW = W - margin.left - margin.right;
+  const innerH = H - margin.top - margin.bottom;
+
+  // --- Tight y-domain (annual zichtbaar) ---
+  const annual = Number.isFinite(activeScale?.annual) ? activeScale.annual : null;
+
+  const windowVals = windowRows
+    .filter(d => d.status === "value" && Number.isFinite(d.value))
+    .map(d => d.value);
+
+  const windowMin = windowVals.length ? d3.min(windowVals) : 0;
+  const windowMax = windowVals.length ? d3.max(windowVals) : 1;
+
+  const minWithAnnual = annual != null ? Math.min(windowMin, annual) : windowMin;
+  const maxWithAnnual = annual != null ? Math.max(windowMax, annual) : windowMax;
+
+  const pad = (maxWithAnnual - minWithAnnual) * 0.15 || 5;
+
+  let yMin = Math.max(0, minWithAnnual - pad);
+  let yMax = maxWithAnnual + pad;
+  if (yMax - yMin < 10) yMax = yMin + 10;
+
+  const x = d3.scalePoint()
+    .domain(windowRows.map((_, i) => i))
+    .range([0, innerW])
+    .padding(0.45);
+
+  const y = d3.scaleLinear()
+    .domain([yMin, yMax])
+    .nice()
+    .range([innerH, 0]);
+
+  const svg = d3.select(host)
+    .append("svg")
+    .attr("width", W)
+    .attr("height", H);
+
+  const g = svg.append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // gridlines
+  g.append("g")
+    .attr("opacity", 0.18)
+    .call(d3.axisLeft(y).ticks(4).tickSize(-innerW).tickFormat(""))
+    .call(s => s.select(".domain").remove());
+
+  // x ticks (om en om) + altijd begin/eind
+  const tickIdx = windowRows.map((_, i) => i).filter(i => i % 2 === 0);
+  if (!tickIdx.includes(0)) tickIdx.unshift(0);
+  const last = windowRows.length - 1;
+  if (!tickIdx.includes(last)) tickIdx.push(last);
+
+  g.append("g")
+    .attr("transform", `translate(0,${innerH})`)
+    .call(
+      d3.axisBottom(x)
+        .tickValues(tickIdx)
+        .tickFormat(i => formatShortMonth(windowRows[i]))
+    )
+    .call(s => s.select(".domain").attr("opacity", 0.2))
+    .call(s => s.selectAll("text").attr("font-size", 10));
+
+  g.append("g")
+    .call(d3.axisLeft(y).ticks(4))
+    .call(s => s.select(".domain").attr("opacity", 0.2))
+    .call(s => s.selectAll("text").attr("font-size", 10));
+
+  // annual guideline
+  if (annual != null) {
+    const yA = y(annual);
+
+    g.append("line")
+      .attr("x1", 0)
+      .attr("x2", innerW)
+      .attr("y1", yA)
+      .attr("y2", yA)
+      .attr("stroke", "#0f172a")
+      .attr("stroke-width", 1.5)
+      .attr("stroke-dasharray", "4 4")
+      .attr("opacity", 0.55);
+
+    g.append("text")
+      .attr("x", innerW)
+      .attr("y", Math.max(10, yA - 6))
+      .attr("text-anchor", "end")
+      .attr("font-size", 10)
+      .attr("fill", "#0f172a")
+      .attr("opacity", 0.7)
+      .text(`${activeScale.key} annual: ${annual} µg/m³`);
+  }
+
+  // line with gaps
+  const line = d3.line()
+    .defined(d => d.status === "value" && Number.isFinite(d.value))
+    .x((d, i) => x(i))
+    .y(d => y(d.value));
+
+  g.append("path")
+    .datum(windowRows)
+    .attr("d", line)
+    .attr("fill", "none")
+    .attr("stroke", "#334155")
+    .attr("stroke-width", 2)
+    .attr("opacity", 0.6);
+
+  // --- Tooltip handler for dots (tap-friendly) ---
+  const attachDotTooltip = (sel, getText) => {
+    sel
+      .style("cursor", "pointer")
+      .on("pointerdown", (event, d) => {
+        // pinned tooltip on tap/click
+        tooltipPinned = true;
+        const text = getText(d);
+        showChartTooltip(text, event.clientX, event.clientY);
+        event.stopPropagation();
+      })
+      .on("pointermove", (event, d) => {
+        // als tooltip pinned is, mag hij meelopen met je vinger/muis
+        if (!tooltipPinned) return;
+        const text = getText(d);
+        showChartTooltip(text, event.clientX, event.clientY);
+      })
+      .on("pointerleave", () => {
+        // op desktop: als hij niet gepinned is, verberg
+        if (tooltipPinned) return;
+        hideChartTooltip();
+      })
+      .on("pointerenter", (event, d) => {
+        // desktop hover: laat zien zolang niet gepinned
+        if (tooltipPinned) return;
+        const text = getText(d);
+        showChartTooltip(text, event.clientX, event.clientY);
+      });
+  };
+
+  // noMeasurement dots (op yMin baseline)
+  const nomDots = g.selectAll("circle.nom-dot")
+    .data(windowRows.map((d, i) => ({ ...d, i })).filter(d => d.status === "noMeasurement"))
+    .enter()
+    .append("circle")
+    .attr("class", "nom-dot")
+    .attr("cx", d => x(d.i))
+    .attr("cy", y(yMin))
+    .attr("r", 3.5)
+    .attr("fill", kleuren.NOMES)
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 1.5)
+    .attr("opacity", 0.9);
+
+  attachDotTooltip(nomDots, d => `${formatShortMonth(d)}: No measurement`);
+
+  // value dots
+  const valDots = g.selectAll("circle.val-dot")
+    .data(windowRows.map((d, i) => ({ ...d, i })).filter(d => d.status === "value"))
+    .enter()
+    .append("circle")
+    .attr("class", "val-dot")
+    .attr("cx", d => x(d.i))
+    .attr("cy", d => y(d.value))
+    .attr("r", 4)
+    .attr("fill", d => getKleuren(d.value, max))
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 1.5);
+
+  attachDotTooltip(valDots, d => `${formatShortMonth(d)}: ${d.value.toFixed(2)} µg/m³`);
+
+  // highlight selected month
+  const selectedKey = monthKey(year, monthIndex);
+  const selIndex = windowRows.findIndex(r => r.dateKey === selectedKey);
+
+  if (selIndex !== -1) {
+    const sel = windowRows[selIndex];
+    const selCy = (sel.status === "value" && Number.isFinite(sel.value)) ? y(sel.value) : y(yMin);
+    const selFill = (sel.status === "value" && Number.isFinite(sel.value)) ? getKleuren(sel.value, max) : kleuren.NOMES;
+
+    g.append("circle")
+      .attr("cx", x(selIndex))
+      .attr("cy", selCy)
+      .attr("r", 7.5)
+      .attr("fill", "none")
+      .attr("stroke", "#0f172a")
+      .attr("stroke-width", 2)
+      .attr("opacity", 0.65);
+
+    g.append("circle")
+      .attr("cx", x(selIndex))
+      .attr("cy", selCy)
+      .attr("r", 4.8)
+      .attr("fill", selFill)
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 2);
+  }
 }
