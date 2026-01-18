@@ -36,7 +36,7 @@
   <main class="home-layout">
     <section id="controls">
       <span style="display: flex;color: black; justify-content: space-between;">
-        <h2>Kumasi Air Quality</h2>
+        <h2><%= (keuzes && keuzes['Gekozen stad']) ? keuzes['Gekozen stad'] : 'Kumasi' %> Air Quality</h2>
         <a href="/info" class="info-btn" aria-label="Info this project">i</a>
       </span>
       <div class="view-toggle" data-view-toggle>
@@ -59,7 +59,6 @@
   </script>
 
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="script.js"></script>
 
   <script src="/js/index.js" defer></script>
 

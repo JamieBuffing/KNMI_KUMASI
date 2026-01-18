@@ -186,6 +186,11 @@ function monthKey(year, monthIndex) {
   return year * 12 + monthIndex; // handig voor vergelijken/sorteren
 }
 
+const monthNames = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December"
+];
+
 function formatMonthYear(year, monthIndex) {
   return `${monthNames[monthIndex]} ${year}`;
 }
@@ -463,12 +468,6 @@ const menuTopRight = createMenu("topright", `
 
 map.addControl(menuTopRight);
 
-// --- state ---
-const monthNames = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December"
-];
-
 // init (wacht tot menu in DOM staat)
 initMenuTopRight();
 
@@ -489,6 +488,17 @@ function initMenuTopRight() {
   const monthButtons = root.querySelectorAll(".inputMonth");
 
   const availability = buildAvailability(points);
+  window.__dateMenuRefs = {
+    root,
+    selectedTekst,
+    dateOptions,
+    yearInput,
+    prevBtn,
+    nextBtn,
+    monthButtons,
+    availability
+  };
+
   const { byYear, years, latest } = availability;
 
   const now = new Date();
@@ -537,6 +547,7 @@ function initMenuTopRight() {
     updateSelectedTekst(selectedTekst);
     updateYearNavDisabled();
     updateMarkers();
+    renderTable();
   };
 
   prevBtn.addEventListener("click", (e) => {
@@ -569,6 +580,34 @@ function initMenuTopRight() {
   });
 }
 
+function syncDateMenuUIFromState() {
+  const refs = window.__dateMenuRefs;
+  if (!refs) return;
+
+  const { selectedTekst, yearInput, prevBtn, nextBtn, monthButtons, availability } = refs;
+  const { byYear, years } = availability || { byYear: new Map(), years: [] };
+
+  // clamp year
+  selectedYear = clampToAvailableYear(years, selectedYear);
+  if (yearInput) yearInput.value = selectedYear;
+
+  // apply month availability + active state
+  selectedMonthIndex = applyMonthAvailability(monthButtons, byYear, selectedYear, selectedMonthIndex);
+  setActiveMonthButton(monthButtons, selectedMonthIndex);
+  updateSelectedTekst(selectedTekst);
+
+  // prev/next disabled
+  if (prevBtn && nextBtn) {
+    if (!years.length) {
+      prevBtn.disabled = false;
+      nextBtn.disabled = false;
+    } else {
+      prevBtn.disabled = (selectedYear <= years[0]);
+      nextBtn.disabled = (selectedYear >= years[years.length - 1]);
+    }
+  }
+}
+
 function setActiveMonthButton(buttons, activeIndex) {
   buttons.forEach((btn, idx) => {
     btn.classList.toggle("active", idx === activeIndex);
@@ -581,29 +620,50 @@ function updateSelectedTekst(selectedTekstEl) {
 
 const menuBottomRight = createMenu("bottomright", `
   <div class="scale-control leaflet-control">
-    <button id="scaleWHO" class="is-active" type="button" data-preset="WHO">WHO</button>
-    <button id="scaleEU" class="" type="button" data-preset="EU">EU</button>
-    <button id="scaleData" class="" type="button" data-preset="DATA" title="">Data</button>
+    <button class="scaleWHO is-active" type="button" data-preset="WHO">WHO</button>
+    <button class="scaleEU" type="button" data-preset="EU">EU</button>
+    <button class="scaleData" type="button" data-preset="DATA" title="">Data</button>
   </div>
 `);
 
 map.addControl(menuBottomRight);
 
-const scaleWHO = document.getElementById("scaleWHO");
-const scaleEU = document.getElementById("scaleEU");
-const scaleData = document.getElementById("scaleData");
+// Pak ALLE knoppen (staan 2x in DOM: map + table)
+const scaleWHOButtons  = document.querySelectorAll(".scaleWHO");
+const scaleEUButtons   = document.querySelectorAll(".scaleEU");
+const scaleDataButtons = document.querySelectorAll(".scaleData");
 
-function setActive(active) {
-  [scaleWHO, scaleEU, scaleData].forEach(btn =>
-    btn.classList.toggle("is-active", btn === active)
-  );
-  changeScale(active);
+// 1 waarheid: activeScale (gebruik je al)
+function setActiveScaleByPreset(presetKey) {
+  const preset = SCALE_PRESETS[presetKey]; // "WHO" | "EU" | "DATA"
+  if (!preset) return;
+
+  activeScale = preset;
+
+  // sync UI voor ALLE knoppen (beide sets)
+  syncScaleButtons();
+
+  // update map visuals
   updateLegenda();
+  updateMarkers();
+  renderTable();
 }
 
-scaleWHO.addEventListener("click", () => setActive(scaleWHO));
-scaleEU.addEventListener("click", () => setActive(scaleEU));
-scaleData.addEventListener("click", () => setActive(scaleData));
+function syncScaleButtons() {
+  const key = activeScale?.key;
+
+  scaleWHOButtons.forEach(btn => btn.classList.toggle("is-active", key === "WHO"));
+  scaleEUButtons.forEach(btn => btn.classList.toggle("is-active", key === "EU"));
+  scaleDataButtons.forEach(btn => btn.classList.toggle("is-active", key === "DATA"));
+}
+
+// Click handlers voor ALLE instanties
+scaleWHOButtons.forEach(btn => btn.addEventListener("click", () => setActiveScaleByPreset("WHO")));
+scaleEUButtons.forEach(btn => btn.addEventListener("click", () => setActiveScaleByPreset("EU")));
+scaleDataButtons.forEach(btn => btn.addEventListener("click", () => setActiveScaleByPreset("DATA")));
+
+// Init: zorg dat de UI klopt op load
+syncScaleButtons();
 maakLegenda();
 
 function updateMarkers() {
@@ -692,7 +752,6 @@ function updateMarkers() {
     marker.on("click", () => openPointOverlay(p, year, monthIndex));
   });
 }
-
 
 function getMonthValue(point, year, monthIndex) {
   const ms = Array.isArray(point?.measurements) ? point.measurements : [];
@@ -921,9 +980,6 @@ function openPointOverlay(point, year, monthIndex) {
   document.body.classList.add("overlay-open");
 
   drawOverlayChart({ point, year, monthIndex });
-
-  // Later: hier kun je meteen D3 initten met data:
-  // drawOverlayChart({ point, year, rows: allRows });
 }
 
 function formatShortMonth(row) {
@@ -931,8 +987,12 @@ function formatShortMonth(row) {
   return `${mon} ${String(row.year).slice(2)}`;
 }
 
-function drawOverlayChart({ point, year, monthIndex }) {
-  const host = document.getElementById("overlayChart");
+/**
+ * ✅ NEW: generieke chart renderer (overlay + table)
+ * - gebruikt exact jouw bestaande overlay-chart code
+ * - alleen host + before/after zijn nu parameters
+ */
+function renderPointChart({ host, point, year, monthIndex, beforeCount = 5, afterCount = 5 }) {
   if (!host) return;
 
   // cleanup vorige chart + outside-click handler
@@ -983,7 +1043,6 @@ function drawOverlayChart({ point, year, monthIndex }) {
     const tip = ensureChartTooltip();
     tip.textContent = text;
 
-    // kleine offset zodat hij niet onder je vinger zit
     const x = clientX;
     const y = clientY;
 
@@ -1011,12 +1070,12 @@ function drawOverlayChart({ point, year, monthIndex }) {
   document.addEventListener("pointerdown", onDocPointerDown, { passive: true });
 
   host._chartCleanup = () => {
-    document.removeEventListener("pointerdown", onDocPointerDown, { passive: true });
+    document.removeEventListener("pointerdown", onDocPointerDown);
   };
 
-  // --- Data window: 5 vóór + selected + 5 ná ---
+  // --- Data window: before + selected + after ---
   const allRows = getSortedMonthlyMeasurements(point);
-  const { windowRows } = buildWindowAround(allRows, year, monthIndex, 5, 5);
+  const { windowRows } = buildWindowAround(allRows, year, monthIndex, beforeCount, afterCount);
 
   if (!windowRows.length) {
     host.textContent = "No data";
@@ -1137,25 +1196,21 @@ function drawOverlayChart({ point, year, monthIndex }) {
     sel
       .style("cursor", "pointer")
       .on("pointerdown", (event, d) => {
-        // pinned tooltip on tap/click
         tooltipPinned = true;
         const text = getText(d);
         showChartTooltip(text, event.clientX, event.clientY);
         event.stopPropagation();
       })
       .on("pointermove", (event, d) => {
-        // als tooltip pinned is, mag hij meelopen met je vinger/muis
         if (!tooltipPinned) return;
         const text = getText(d);
         showChartTooltip(text, event.clientX, event.clientY);
       })
       .on("pointerleave", () => {
-        // op desktop: als hij niet gepinned is, verberg
         if (tooltipPinned) return;
         hideChartTooltip();
       })
       .on("pointerenter", (event, d) => {
-        // desktop hover: laat zien zolang niet gepinned
         if (tooltipPinned) return;
         const text = getText(d);
         showChartTooltip(text, event.clientX, event.clientY);
@@ -1220,3 +1275,406 @@ function drawOverlayChart({ point, year, monthIndex }) {
       .attr("stroke-width", 2);
   }
 }
+
+function drawOverlayChart({ point, year, monthIndex }) {
+  const host = document.getElementById("overlayChart");
+  if (!host) return;
+
+  // overlay blijft 5/5
+  renderPointChart({ host, point, year, monthIndex, beforeCount: 5, afterCount: 5 });
+}
+
+/* =========================================================
+   -------------------------- Table (dropdowns + card list + accordion)
+========================================================= */
+
+let tableInited = false;
+const openRows = new Map(); // point_number -> boolean
+
+const tableState = {
+  sort: "no2_desc", // no2_desc | no2_asc | name_asc | name_desc
+  search: ""
+};
+
+// ✅ NEW: globale settings (alleen bewerkbaar als card open is)
+const tableWindowSettings = { before: 5, after: 5 };
+let tableSettingsOpen = false;
+
+function clampInt(n, min, max) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return min;
+  return Math.max(min, Math.min(max, Math.trunc(v)));
+}
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function fmtValue(v) {
+  return (typeof v === "number" && !Number.isNaN(v)) ? `${v.toFixed(1)} µg/m³` : "—";
+}
+
+// Label + accent kleur (zoals screenshot: Low/Medium/High/Very high)
+function getLevelMetaForTable(value, isNoMeasurement) {
+  if (isNoMeasurement || typeof value !== "number" || Number.isNaN(value)) {
+    return { label: "n/a", accent: "#94A3B8" };
+  }
+
+  const a = activeScale?.annual;
+  const h = activeScale?.high;
+
+  if (typeof a !== "number" || typeof h !== "number") {
+    // fallback als scale incompleet is
+    const max = activeScale?.colorMax ?? maxValue ?? 0;
+    const cls = getClass(value, max);
+    return { label: cls.label, accent: getKleuren(value, max) };
+  }
+
+  const highUpper = h + (h - a);
+
+  if (value <= a) return { label: "Low", accent: "#22C55E" };
+  if (value <= h) return { label: "Medium", accent: "#EAB308" };
+  if (value <= highUpper) return { label: "High", accent: "#F97316" };
+  return { label: "Very high", accent: "#EF4444" };
+}
+
+function buildTableMonthOptions(selectEl) {
+  const availability = buildAvailability(points);
+  const { byYear, years, latest } = availability;
+
+  // alle beschikbare months flattenen
+  const flat = [];
+  years.forEach(y => {
+    const set = byYear.get(y);
+    if (!set) return;
+    Array.from(set).forEach(mo => flat.push({ y, mo, key: `${y}-${String(mo).padStart(2, "0")}` }));
+  });
+
+  flat.sort((a, b) => (b.y - a.y) || (b.mo - a.mo));
+
+  selectEl.innerHTML = "";
+  flat.forEach(({ y, mo, key }) => {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = `${monthNames[mo]} ${y}`;
+    selectEl.appendChild(opt);
+  });
+
+  // default = huidige globale selectie, anders latest
+  const desiredKey = `${selectedYear}-${String(selectedMonthIndex).padStart(2, "0")}`;
+  const exists = flat.some(x => x.key === desiredKey);
+
+  if (exists) selectEl.value = desiredKey;
+  else if (latest) selectEl.value = `${latest.year}-${String(latest.monthIndex).padStart(2, "0")}`;
+  else if (flat.length) selectEl.value = flat[0].key;
+}
+
+function parseMonthKey(key) {
+  const [y, mo] = String(key || "").split("-");
+  return { year: Number(y), monthIndex: Number(mo) };
+}
+
+function initTableView() {
+  if (tableInited) return;
+
+  const monthSelect = document.getElementById("tableMonth");
+  const sortSelect = document.getElementById("tableSort");
+  const searchInput = document.getElementById("tableSearch");
+  const listEl = document.getElementById("tableList");
+
+  if (!monthSelect || !sortSelect || !searchInput || !listEl) return;
+
+  // fill month dropdown (based on your data)
+  buildTableMonthOptions(monthSelect);
+
+  // set sort default
+  sortSelect.value = tableState.sort;
+
+  monthSelect.addEventListener("change", () => {
+    const { year, monthIndex } = parseMonthKey(monthSelect.value);
+    if (!Number.isFinite(year) || !Number.isFinite(monthIndex)) return;
+
+    selectedYear = year;
+    selectedMonthIndex = monthIndex;
+
+    // sync top-right date menu UI
+    syncDateMenuUIFromState();
+
+    // refresh visuals
+    updateMarkers();
+    renderTable();
+  });
+
+  sortSelect.addEventListener("change", () => {
+    tableState.sort = sortSelect.value;
+    renderTable();
+  });
+
+  searchInput.addEventListener("input", () => {
+    tableState.search = searchInput.value.trim().toLowerCase();
+    renderTable();
+  });
+
+  // ✅ UPDATED: single-open accordion + settings + +/- buttons
+  listEl.addEventListener("click", (e) => {
+    // 1) toggle accordion (only header)
+    const header = e.target.closest("[data-accordion-toggle]");
+    if (header) {
+      const card = header.closest(".table-card");
+      if (!card) return;
+
+      const id = Number(card.dataset.pointNumber);
+      const isOpen = openRows.get(id) === true;
+
+      // ✅ only one open: close all others
+      openRows.clear();
+
+      // toggle current
+      if (!isOpen) {
+        openRows.set(id, true);
+      } else {
+        tableSettingsOpen = false; // closing => settings dicht
+      }
+
+      renderTable();
+      return;
+    }
+
+    // 2) settings toggle
+    const settingsBtn = e.target.closest("[data-table-settings]");
+    if (settingsBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      tableSettingsOpen = !tableSettingsOpen;
+      renderTable();
+      return;
+    }
+
+    // 3) +/- controls (global)
+    const decBefore = e.target.closest("[data-before-dec]");
+    const incBefore = e.target.closest("[data-before-inc]");
+    const decAfter = e.target.closest("[data-after-dec]");
+    const incAfter = e.target.closest("[data-after-inc]");
+
+    if (decBefore || incBefore || decAfter || incAfter) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (decBefore) tableWindowSettings.before = Math.max(0, tableWindowSettings.before - 1);
+      if (incBefore) tableWindowSettings.before = Math.min(12, tableWindowSettings.before + 1);
+
+      if (decAfter) tableWindowSettings.after = Math.max(0, tableWindowSettings.after - 1);
+      if (incAfter) tableWindowSettings.after = Math.min(12, tableWindowSettings.after + 1);
+
+      tableSettingsOpen = true; // open houden tijdens aanpassen
+      renderTable();
+      return;
+    }
+  });
+
+  // ✅ input-listener is niet meer nodig (we gebruiken +/- knoppen)
+  tableInited = true;
+}
+
+function renderTable() {
+  initTableView();
+
+  const monthSelect = document.getElementById("tableMonth");
+  const sortSelect = document.getElementById("tableSort");
+  const searchInput = document.getElementById("tableSearch");
+  const listEl = document.getElementById("tableList");
+  if (!monthSelect || !sortSelect || !searchInput || !listEl) return;
+
+  // keep dropdown in sync if month changed via map menu
+  const desiredKey = `${selectedYear}-${String(selectedMonthIndex).padStart(2, "0")}`;
+  if (monthSelect.value !== desiredKey) {
+    const has = Array.from(monthSelect.options).some(o => o.value === desiredKey);
+    if (!has) buildTableMonthOptions(monthSelect);
+    monthSelect.value = desiredKey;
+  }
+
+  const year = selectedYear;
+  const monthIndex = selectedMonthIndex;
+
+  const q = tableState.search;
+
+  // Build items for current month
+  let items = points.map(pt => {
+    const location = pt?.location || `Point ${pt?.point_number ?? ""}`;
+    const city = (window?.bootData?.keuzes?.["Gekozen stad"]) ? window.bootData.keuzes["Gekozen stad"] : "Kumasi";
+
+    const res = getMonthValue(pt, year, monthIndex);
+
+    const isNo = (res?.status === "noMeasurement");
+    const value = (res?.status === "value") ? res.value : null;
+
+    const meta = getLevelMetaForTable(value, isNo);
+
+    const max = activeScale?.colorMax ?? maxValue ?? 0;
+    const dot = isNo ? "#94A3B8" : (value == null ? "#94A3B8" : getKleuren(value, max));
+
+    return {
+      pt,
+      location,
+      city,
+      value,
+      isNo,
+      level: meta.label,
+      levelColor: meta.accent,
+      dot
+    };
+  });
+
+  // search
+  if (q) {
+    items = items.filter(item => item.location.toLowerCase().includes(q));
+  }
+
+  // sort
+  const valueOrNegInf = (v) => (typeof v === "number" && !Number.isNaN(v)) ? v : -Infinity;
+  const valueOrPosInf = (v) => (typeof v === "number" && !Number.isNaN(v)) ? v : Infinity;
+
+  items.sort((a, b) => {
+    if (tableState.sort === "no2_desc") return valueOrNegInf(b.value) - valueOrNegInf(a.value);
+    if (tableState.sort === "no2_asc") return valueOrPosInf(a.value) - valueOrPosInf(b.value);
+    if (tableState.sort === "name_desc") return b.location.localeCompare(a.location);
+    return a.location.localeCompare(b.location);
+  });
+
+  if (!items.length) {
+    listEl.innerHTML = `<div style="padding:10px; color:#0b3d4d; font-weight:600;">No results</div>`;
+    return;
+  }
+
+  const monthLabel = (Number.isFinite(monthIndex) && monthNames[monthIndex]) ? monthNames[monthIndex] : "";
+  const metaText = `${escapeHtml("Kumasi")} · ${escapeHtml(monthLabel)} ${escapeHtml(String(year))}`;
+
+  const selectedKey = monthKey(year, monthIndex);
+
+  listEl.innerHTML = items.map(item => {
+    const p = item.pt;
+    const id = p.point_number;
+    const open = openRows.get(id) === true;
+
+    // ✅ windowed rows i.p.v. alle rows
+    const allRowsSorted = getSortedMonthlyMeasurements(p);
+    const { windowRows } = buildWindowAround(
+      allRowsSorted,
+      year,
+      monthIndex,
+      tableWindowSettings.before,
+      tableWindowSettings.after
+    );
+
+    const measuresHtml = windowRows.map(r => {
+      const isSel = r.dateKey === selectedKey;
+
+      let v = "No measurement";
+      if (r.status === "value") v = `${r.value.toFixed(1)} µg/m³`;
+
+      return `
+        <li class="measureRow ${isSel ? "is-selected" : ""}">
+          <span class="measureMonth">${escapeHtml(formatMonthYear(r.year, r.monthIndex))}</span>
+          <span class="measureVal">${escapeHtml(v)}</span>
+        </li>
+      `;
+    }).join("");
+
+    const settingsHtml = `
+      <div class="table-panel__top" style="display:flex; justify-content:flex-end; align-items:center; position:relative; margin: 6px 0 10px 0;">
+        <button type="button" class="table-settings-btn" data-table-settings aria-label="Window settings"
+          style="border:1px solid #dbe5ef; background:#fff; border-radius:10px; padding:6px 8px; cursor:pointer;">
+          ⚙
+        </button>
+
+        <div class="table-settings-popover" ${tableSettingsOpen ? "" : "hidden"}
+          style="position:absolute; top:38px; right:0; width:min(280px,100%); background:#fff; border:1px solid #dbe5ef; border-radius:12px; padding:10px; box-shadow:0 14px 40px rgba(15,23,42,.16); z-index:5;">
+
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:12px; color:#0f172a; margin:8px 0;">
+            <span>Months before</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button type="button" data-before-dec
+                style="width:32px;height:32px;border-radius:10px;border:1px solid #dbe5ef;background:#fff;cursor:pointer;font-weight:700;">−</button>
+
+              <strong style="min-width:22px;text-align:center; display:inline-block;">${escapeHtml(String(tableWindowSettings.before))}</strong>
+
+              <button type="button" data-before-inc
+                style="width:32px;height:32px;border-radius:10px;border:1px solid #dbe5ef;background:#fff;cursor:pointer;font-weight:700;">+</button>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:12px; color:#0f172a; margin:8px 0;">
+            <span>Months after</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button type="button" data-after-dec
+                style="width:32px;height:32px;border-radius:10px;border:1px solid #dbe5ef;background:#fff;cursor:pointer;font-weight:700;">−</button>
+
+              <strong style="min-width:22px;text-align:center; display:inline-block;">${escapeHtml(String(tableWindowSettings.after))}</strong>
+
+              <button type="button" data-after-inc
+                style="width:32px;height:32px;border-radius:10px;border:1px solid #dbe5ef;background:#fff;cursor:pointer;font-weight:700;">+</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    return `
+      <div class="table-card" data-point-number="${escapeHtml(id)}" aria-expanded="${open ? "true" : "false"}">
+        <div class="table-card__header" data-accordion-toggle role="button" tabindex="0">
+          <div class="table-card__title">
+            <span class="table-dot" style="background:${escapeHtml(item.dot)}"></span>
+            <span>${escapeHtml(item.location)}</span>
+          </div>
+
+          <div class="table-card__metric">
+            NO₂ : <strong>${escapeHtml(fmtValue(item.value))}</strong>
+            · <span class="table-level" style="color:${escapeHtml(item.levelColor)}">${escapeHtml(item.level)}</span>
+          </div>
+
+          <div class="table-card__meta">${metaText}</div>
+        </div>
+
+        ${open ? `
+          <div class="table-panel">
+            ${p.description ? `<div style="color:#475569; font-size:12px; margin-bottom:8px;">${escapeHtml(p.description)}</div>` : ""}
+
+            ${settingsHtml}
+
+            <!-- ✅ Chart for this point -->
+            <div id="tableChart-${escapeHtml(id)}" class="table-pointChart" style="width:100%; min-height:150px; background:#fff; border:1px solid #e6eef6; border-radius:12px; padding:6px 6px 2px 6px;"></div>
+
+            <ul class="measureList">${measuresHtml}</ul>
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }).join("");
+
+  // ✅ draw charts for open panels
+  items.forEach(item => {
+    const id = item.pt.point_number;
+    if (openRows.get(id) !== true) return;
+
+    const host = document.getElementById(`tableChart-${id}`);
+    if (!host) return;
+
+    renderPointChart({
+      host,
+      point: item.pt,
+      year,
+      monthIndex,
+      beforeCount: tableWindowSettings.before,
+      afterCount: tableWindowSettings.after
+    });
+  });
+}
+
+// initial render
+renderTable();
