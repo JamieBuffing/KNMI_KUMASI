@@ -215,3 +215,35 @@
   border-radius: 12px;
   padding: 6px 6px 2px 6px;
 }
+
+/* ✅ voorkom "breder worden" bij openklappen */
+#tableList, .table-card, .table-panel, .measureList, .table-pointChart {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.table-card {
+  width: 100%;
+  overflow: hidden; /* vangt accidental overflow op */
+}
+
+.table-panel {
+  overflow: hidden;
+}
+
+.table-pointChart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* lange tekst/waarden mogen niet de layout oprekken */
+.measureRow, .measureMonth, .measureVal {
+  min-width: 0;
+}
+
+.measureMonth, .measureVal {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

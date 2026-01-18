@@ -1083,7 +1083,18 @@ function renderPointChart({ host, point, year, monthIndex, beforeCount = 5, afte
   }
 
   // --- Sizes ---
-  const W = host.clientWidth || 460;
+  let W = Math.floor(host.getBoundingClientRect().width);
+
+  // Soms is width 0 direct na render (accordion anim/DOM). Dan 1 frame later opnieuw proberen.
+  if (!W || W < 10) {
+    requestAnimationFrame(() => {
+      const w2 = Math.floor(host.getBoundingClientRect().width);
+      if (w2 && w2 >= 10) {
+        renderPointChart({ host, point, year, monthIndex, beforeCount, afterCount });
+      }
+    });
+    return;
+  }
   const H = 140;
   const margin = { top: 10, right: 10, bottom: 26, left: 34 };
   const innerW = W - margin.left - margin.right;
