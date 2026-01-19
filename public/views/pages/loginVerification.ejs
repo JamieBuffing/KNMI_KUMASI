@@ -10,13 +10,10 @@
         <%- include('../partials/header'); %>
     </header>
     <main>
+        <h1 class="auth-title">Verify Code</h1>
+        <p class="auth-subtitle">Enter the 6-digit code we sent to your email address.</p>
         <div class="auth-page">
             <div class="auth-card">
-                <h1 class="auth-title">Verify Code</h1>
-                <p class="auth-subtitle">
-                    Enter the 6-digit code we sent to your email address.
-                </p>
-
                 <% if (typeof error !== 'undefined' && error) { %>
                     <div class="auth-error"><%= error %></div>
                 <% } %>

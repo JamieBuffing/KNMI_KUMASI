@@ -1,0 +1,9 @@
+main {
+    height: 82%;
+    align-items: center;
+    padding: 20px;
+    color: var(--color-text);
+}
+p {
+    margin-bottom: 10px;
+}

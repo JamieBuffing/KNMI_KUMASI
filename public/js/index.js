@@ -17,7 +17,7 @@ const kleuren = {
   MID: "rgb(255, 255, 0)",
   HIGH: "rgb(255, 165, 0)",
   MAX: "rgb(255, 0, 0)",
-  ABSOLUTE: "rgb(0, 0, 0)",
+  ABSOLUTE: "rgb(54, 0, 54)",
   NOMES: "rgb(160, 160, 160)"
 };
 
@@ -27,7 +27,7 @@ const SCALE_PRESETS = {
   DATA: { key: "DATA", label: "Data", annual: null, colorMax: null }
 };
 
-let activeScale = { key: "WHO", label: "WHO", annual: 10, colorMax: 20 };
+let activeScale = { key: "EU", label: "EU", annual: 40, colorMax: 80 };
 
 let legendaControl;
 let legendaElements = {};
@@ -133,7 +133,7 @@ function getKleuren(value, maxValue) {
   if (value > maxValue) {
     const tBlack = Math.min(Math.max((value - maxValue) / (maxValue * 4), 0), 1); // 0..1
     const red = parseRgbString(kleuren.MAX);      // [255,0,0]
-    const black = [0, 0, 0];
+    const black = parseRgbString(kleuren.ABSOLUTE);
 
     const r = Math.round(lerp(red[0], black[0], tBlack));
     const g = Math.round(lerp(red[1], black[1], tBlack));
@@ -306,6 +306,23 @@ function maakLegenda() {
         <span class="legendaDot" style="background-color:${kleuren.MAX}"></span>
         Dangerous | <span id="legend-max">${legendValues.MAX}</span>
       </p>
+      <span
+        style="
+        border-radius: 5px;
+          display: block;
+          padding: 10px;
+          width: inherit;
+          height: 20px;
+          background: linear-gradient(
+            to right,
+            rgb(0, 255, 0),
+            rgb(255, 255, 0),
+            rgb(255, 165, 0),
+            rgb(255, 0, 0),
+            rgb(54, 0, 54)
+          );
+        ">
+      </span>
     </div>
   `);
 
@@ -1303,7 +1320,7 @@ let tableInited = false;
 const openRows = new Map(); // point_number -> boolean
 
 const tableState = {
-  sort: "no2_desc", // no2_desc | no2_asc | name_asc | name_desc
+  sort: "no2_asc", // no2_desc | no2_asc | name_asc | name_desc
   search: ""
 };
 
@@ -1689,3 +1706,5 @@ function renderTable() {
 
 // initial render
 renderTable();
+
+setActiveScaleByPreset("DATA")

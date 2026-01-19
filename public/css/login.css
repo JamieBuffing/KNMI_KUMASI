@@ -2,7 +2,6 @@
 
 main {
   height: 82%;
-  display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
@@ -29,13 +28,14 @@ main {
 /* Titel + subtitel */
 
 .auth-title {
+  color: var(--color-header);
   font-size: 1.4rem;
   margin-bottom: 4px;
 }
 
 .auth-subtitle {
   font-size: 0.9rem;
-  color: #555555;
+  color: var(--color-header);
   margin-bottom: 18px;
 }
 
@@ -48,9 +48,10 @@ main {
 }
 
 .auth-form label {
-  font-size: 0.9rem;
   margin-bottom: 4px;
   display: block;
+  font-weight: bold;
+  color: var(--color-header);
 }
 
 .auth-input {
@@ -89,7 +90,7 @@ main {
   border-radius: 999px;
   border: none;
   cursor: pointer;
-  background: linear-gradient(135deg, #096e00, #0ca000);
+  background: linear-gradient(135deg, var(--color-header), var(--color-accent));
   color: #ffffff;
   font-weight: 600;
   font-size: 0.95rem;

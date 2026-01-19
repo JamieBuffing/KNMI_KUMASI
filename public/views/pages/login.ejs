@@ -10,10 +10,10 @@
         <%- include('../partials/header'); %>
     </header>
     <main>
+        <h1 class="auth-title">Login</h1>
+        <p class="auth-subtitle">Enter your email to receive a one-time login code.</p>
         <div class="auth-page">
             <div class="auth-card">
-                <h1 class="auth-title">Login</h1>
-                <p class="auth-subtitle">Enter your email address to receive a login code.</p>
 
                 <% if (typeof error !== 'undefined' && error) { %>
                     <div class="auth-error"><%= error %></div>
@@ -22,20 +22,17 @@
                 <form method="POST" action="/loginform" class="auth-form">
                     <div>
                         <label for="email">Email address</label>
-                        <input id="email" name="email" type="email" class="auth-input" required>
+                        <input id="email" name="email" type="email" class="auth-input" placeholder="name@example.com" required>
                     </div>
                     <button type="submit" class="auth-button">Send code</button>
                 </form>
 
                 <p class="auth-footer-text">
-                    You will receive an email with your login code within a few seconds.
+                    You’ll receive a 6-digit code by email within a few seconds
                 </p>
             </div>
         </div>
     </main>
-    <footer>
-        <%- include('../partials/footer'); %>
-    </footer>
 <script>
   window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
 </script>

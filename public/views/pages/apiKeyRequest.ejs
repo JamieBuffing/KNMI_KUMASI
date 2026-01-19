@@ -10,13 +10,10 @@
         <%- include('../partials/header'); %>
     </header>
     <main>
+        <h1 class="auth-title">Request API key</h1>
+        <p class="auth-subtitle">Enter your email address. We will send you a verification code to confirm it’s yours.</p>
         <div class="auth-page">
             <div class="auth-card">
-                <h1 class="auth-title">Request API key</h1>
-                <p class="auth-subtitle">
-                    Enter your email address. We will send you a verification code to confirm it’s yours.
-                </p>
-
                 <% if (typeof error !== 'undefined' && error) { %>
                     <div class="auth-error"><%= error %></div>
                 <% } %>

@@ -1,0 +1,48 @@
+main {
+    height: 82%;
+    align-items: center;
+    padding: 20px;
+    color: var(--color-text);
+}
+p {
+    margin-bottom: 10px;
+}
+main img {
+    width: 50%;
+    display: flex;
+    justify-self: center;
+    border: solid 1px #363636;
+    border-radius: 15px;
+    margin: 10px;
+}
+main img:last-of-type {
+    width: 80%;
+}
+.accordion summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+/* Verberg standaard marker */
+.accordion summary::marker {
+  content: "";
+}
+
+/* Chevron */
+.accordion summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  margin-left: 8px;
+}
+
+/* Open = omhoog */
+.accordion[open] summary::after {
+  transform: rotate(-135deg);
+}

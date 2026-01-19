@@ -10,11 +10,65 @@
         <%- include('../partials/header'); %>
     </header>
     <main>
-        
+        <h2>NO₂</h2>
+        <h3>Nitrogen Dioxide</h3>
+        <br>
+        <h3>What is NO₂?</h3>
+        <p>
+            Nitrogen dioxide (NO₂) is a harmful air pollutant mainly produced by road traffic, 
+            generators, and industrial activities.
+        </p>
+        <h3>What do the colours mean?</h3>
+        <p>
+            The colours on the map indicate air quality levels. 
+            Green means air quality is generally safe. 
+            Red means air quality may be unhealthy, especially for children and elderly people.
+        </p>
+        <img alt="Afbeelding van de legenda" src="/img/legenda.png">
+        <p>
+            Higher values indicate poorer air quality.
+            The values shown represent average NO₂ concentrations over a longer period. 
+            They reflect long-term exposure rather than short-term pollution peaks.
+        </p>
+        <details class="accordion">
+            <summary><h3>WHO guidelines</h3></summary>
+            <p>
+                The World Health Organization (WHO) provides international health-based air quality guidelines. 
+                These values indicate levels above which air pollution may harm health. 
+                They are not legally binding, but are widely used as a global health reference.
+            </p>
+        </details>
+        <details class="accordion">
+            <summary><h3>EU limit values</h3></summary>
+            <p>
+                The European Union (EU) sets legally binding air quality limits. 
+                These limits are used to assess compliance with environmental regulations 
+                and are generally less strict than WHO guidelines.
+            </p>
+        </details>
+        <details class="accordion">
+            <summary><h3>Measured data</h3></summary>
+            <p>
+                The values shown on this platform are measured NO₂ concentrations at specific locations. 
+                They represent average concentrations over a defined period (for example, monthly averages).
+            </p>
+        </details>
+        <br>
+        <h3>Why does this matter for health?</h3>
+        <p>
+            Long-term exposure to elevated NO₂ levels can:
+            • Irritate the lungs
+            • Worsen asthma symptoms
+            • Increase the risk of respiratory and cardiovascular diseases
+            Especially in busy urban areas.
+        </p>
+        <h3>How are these measurements taken?</h3>
+        <p>
+            NO₂ levels are measured using passive diffusion tubes placed at multiple locations across the city, 
+            including roadside, residential, and industrial areas.
+        </p>
+        <img alt="Afbeelding van de meetbuisjes" src="/img/tubes.png">
     </main>
-    <footer>
-        <%- include('../partials/footer'); %>
-    </footer>
 <script>
   window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
 </script>
