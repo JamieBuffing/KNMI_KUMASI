@@ -38,65 +38,92 @@ body {
 }
 
 /* ========== HEADER (GLOBAL) ========== */
-header {
+.site-header {
   background-color: var(--color-header);
-  color: #FFFFFF;
+  color: #ffffff;
   padding: 8px 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 👈 DIT IS DE FIX */
 }
 
-header h1 {
-  font-size: 1.25rem;
-}
-
-#header {
+/* links (logo + titel) */
+.site-header__left {
   text-decoration: none;
   color: inherit;
+
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px;
+
+  min-width: 0;
 }
 
-header img {
+/* dit duwt alles rechts */
+.site-header__right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.site-header img {
   height: 40px;
   width: auto;
+  display: block;
 }
 
-/* Header button (als je die gebruikt) */
-.header-button{
-  font-size: 22px;
+.site-header h1 {
+  font-size: 1.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* button */
+.header-button {
   width: 40px;
   height: 40px;
+
   display: grid;
   place-items: center;
+
+  font-size: 22px;
+  line-height: 1;
+
   color: var(--color-white);
   background: none;
   border: none;
   cursor: pointer;
 }
 
-/* Header dropdown menu */
+/* dropdown wrapper */
 .header-menu {
   position: relative;
   display: inline-flex;
   align-items: center;
 }
 
+/* dropdown */
 .header-dropdown {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
+
   min-width: 160px;
+  padding: 6px;
+
   background: var(--color-surface);
-  border: 1px solid rgba(0,0,0,0.15);
+  border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 12px;
   box-shadow: var(--shadow-soft);
-  padding: 6px;
-  display: block;
+
   opacity: 0;
   transform: translateY(-4px);
   pointer-events: none;
   transition: opacity 0.12s ease, transform 0.12s ease;
+
   z-index: 9999;
 }
 
@@ -110,6 +137,7 @@ header img {
   display: block;
   padding: 10px 10px;
   border-radius: 10px;
+
   text-decoration: none;
   color: #000;
   font-size: 14px;
@@ -120,7 +148,6 @@ header img {
   background: #eef2f6;
   outline: none;
 }
-
 /* ========== MAIN (GLOBAL) ========== */
 main {
   background-color: var(--color-white);

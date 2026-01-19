@@ -1,10 +1,11 @@
 /* ===== Algemene layout voor login / verification pagina's ===== */
 
 main {
-  height: 82%;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+    height: 82%;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    justify-items: center;
 }
 
 /* Buitenste container zodat alles netjes in het midden komt */

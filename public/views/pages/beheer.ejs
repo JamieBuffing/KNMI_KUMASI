@@ -3,181 +3,126 @@
 <head>
     <%- include('../partials/head'); %>
     <title>Admin</title>
+    <link rel="stylesheet" href="/css/beheerOUD.css">
     <link rel="stylesheet" href="/css/beheer.css">
 </head>
 <body>
-    <header>
+    <header class="site-header">
         <%- include('../partials/header'); %>
     </header>
 
-    <main class="beheer-main">
-        <section class="beheer-header">
-            <div>
-                <h1>Admin dashboard</h1>
-                <p>Overview of measurement points, users and new measurements.</p>
-            </div>
-            <div class="beheer-header-actions">
-                <a href="/" class="btn btn-secondary">Back to map</a>
-                <a href="/logout" class="btn btn-danger">Log out</a>
+    <main>
+        <section>
+            <h2>Admin dashboard</h2>
+            <p>Overview of measurement points, users and new measurements.</p>
+            <article>
+            <a href="/">Back to map</a>
+            <a href="/logout">Log out</a>
+        </article>
+        </section>
+        <section>
+            <h2>Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat">
+                    <span class="stat-label">Measurement points</span>
+                    <span class="stat-value" id="stat-points">–</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Total measurements</span>
+                    <span class="stat-value" id="stat-measurements">–</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Year range</span>
+                    <span class="stat-value" id="stat-years">–</span>
+                </div>
             </div>
         </section>
-
-        <section class="beheer-grid">
-            <!-- Stats -->
-            <div class="beheer-card">
-                <h2>Statistics</h2>
-                <div class="stats-grid">
-                    <div class="stat">
-                        <span class="stat-label">Measurement points</span>
-                        <span class="stat-value" id="stat-points">–</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">Total measurements</span>
-                        <span class="stat-value" id="stat-measurements">–</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">Year range</span>
-                        <span class="stat-value" id="stat-years">–</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Batch measurements -->
-            <div class="beheer-card" id="batch-card">
-                <h2>New measurements</h2>
-                <p>Enter a new value for each point or select “No measurement possible”. Please fill all rows.</p>
-
-                <form id="batch-form">
-                    <div class="batch-meta">
-                        <label>
-                            <span>Year</span>
-                            <input
-                            type="number"
-                            id="batch-year"
-                            min="2000"
-                            max="2100"
-                            step="1"
-                            required
-                            >
+        <section>
+            <h2>New measurements</h2>
+            <p>
+                Enter a value for each point, or select “No measurement possible”. Please complete all rows.
+            </p>
+            <form action="/" method="POST">
+            <section id="dateControl">
+                <label for="batchYear">
+                    <span>Year</span>
+                </label>
+                <label>
+                    <span>Month</span>
+                </label>
+                <input type="number" id="batchYear" min="2000" step="1" required>
+                <select id="batchMonth" required>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                    </select>
+            </section>
+                <button type="submit" class="">Save measurements</button>
+                    <span id="batchStatus" class="formStatus" aria-live="polite"></span>
+                <section id="batchInput">
+                    <article>
+                        <h3>Location</h3>
+                        <label>Tube ID</label>
+                        <label>Value (µg/m³)</label>
+                        <input name="inputTube" type="text" placeholder="B3" required>
+                        <input name="inputValue" type="number" step="1" placeholder="23,35" required>
+                        <label class="batchNoMeasurement">
+                            <input type="checkbox" class="NMP">
+                            <span>No measurement possible</span>
                         </label>
-
-                        <label>
-                            <span>Month</span>
-                            <select id="batch-month" required>
-                            <option value="1">January</option>
-                            <option value="2">February</option>
-                            <option value="3">March</option>
-                            <option value="4">April</option>
-                            <option value="5">May</option>
-                            <option value="6">June</option>
-                            <option value="7">July</option>
-                            <option value="8">August</option>
-                            <option value="9">September</option>
-                            <option value="10">October</option>
-                            <option value="11">November</option>
-                            <option value="12">December</option>
-                            </select>
+                    </article>
+                    <article>
+                        <h3>Location</h3>
+                        <label>Tube ID</label>
+                        <label>Value (µg/m³)</label>
+                        <input name="inputTube" type="text" placeholder="B3" required>
+                        <input name="inputValue" type="number" step="1" placeholder="23,35" required>
+                        <label class="batchNoMeasurement">
+                            <input type="checkbox" class="NMP">
+                            <span>No measurement possible</span>
                         </label>
-
-                        <button type="submit" class="btn btn-secondary">Save measurements</button>
-                        <span id="batch-status" class="form-status" aria-live="polite"></span>
-                    </div>
-                    <div class="batch-points-list" id="batch-points-list">
-                        <!-- One row per point, filled by JS -->
-                    </div>
-                </form>
-            </div>
-
-            <!-- Points table -->
-            <div class="beheer-card beheer-table-card">
-                <div class="beheer-table-header">
-                    <h2>Measurement points</h2>
-                    <div class="beheer-table-controls">
-                        <button type="button" id="add-point-btn" class="btn btn-secondary">
-                            + New point
-                        </button>
-                        <input
-                            type="text"
-                            id="search-input"
-                            placeholder="Search by name or coordinates..."
-                            aria-label="Search"
-                        >
-                        <span id="table-count" class="table-count">0 results</span>
-                    </div>
-                </div>
-
-                <div class="beheer-table-wrapper">
-                    <table class="beheer-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Coordinates</th>
-                                <th>City</th>
-                                <th>Number of measurements</th>
-                                <th>First date</th>
-                                <th>Last date</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="points-tbody">
-                            <!-- Filled by JS -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <div id="beheer-empty" class="beheer-empty hidden">
-                    <p>No measurement points found.</p>
-                </div>
-            </div>
-
-            <!-- Users section -->
-            <div class="beheer-card" id="users-card">
-                <div class="beheer-users-header">
-                    <h2>Authorized e-mail addresses</h2>
-                    <p>These e-mail addresses can log in to the admin environment.</p>
-                </div>
-
-                <form id="user-add-form" class="user-add-form">
-                    <input
-                        type="email"
-                        id="user-email-input"
-                        name="email"
-                        required
-                        placeholder="Add e-mail address"
-                        autocomplete="off"
-                    >
-                    <button type="submit" class="btn btn-secondary">Add</button>
-                    <span id="user-add-error" class="form-error" aria-live="polite"></span>
-                </form>
-
-                <div class="beheer-table-wrapper users-table-wrapper">
-                    <table class="beheer-table" id="users-table">
-                        <thead>
-                            <tr>
-                                <th>E-mail</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-tbody">
-                            <!-- Filled by JS -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <div id="users-empty" class="beheer-empty hidden">
-                    <p>No users found yet.</p>
-                </div>
-            </div>
+                    </article>
+                </section>
+            </form>
+        </section>
+        <section id="measurementPoints">
+            <h2>Measurement points</h2>
+            <article>
+                <h3>Locatie</h3>
+                <span>status</span>
+                <p class="div3">Coordinates</p>
+                <p class="div4">City</p>
+                <p class="div5">Lat:</p>
+                <p class="div6">Lon:</p>
+                <p class="div7">Kumasi</p>
+                <p class="div8">Measurements</p>
+                <p class="div9">Period</p>
+                <p class="div10">7</p>
+                <p class="div11">2025-05 to 2025-10</p>
+                <form class="div12" action="/" method="post"><button>Edit</button></form>
+                <form class="div13" action="/" method="post"><button>Deactivate</button></form>
+            </article>
+        </section>
+        <section id="adminEmails">
+            <h2>Authorized email addresses</h2>
+            <article>
+                <p>example@mail.com</p>
+                <p>Created at: yyyy-mm-dd</p>
+                <form action="/" method="post"><button>Remove</button></form>
+            </article>
         </section>
     </main>
-
-    <footer>
-        <%- include('../partials/footer'); %>
-    </footer>
-
-    <script src="/js/beheer.js" defer></script>
+    <!-- <script src="/js/beheerOUD.js" defer></script> -->
+     <script src="/js/beheer.js"></script>
 <script>
   window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
 </script>

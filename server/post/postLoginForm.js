@@ -21,7 +21,7 @@ module.exports = async function postLoginForm(req, res, next) {
     }
 
     const { plain, hash } = await generateCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 100 * 60 * 1000);
 
     const loginCodesCollection = db.collection("LoginCodes");
     await loginCodesCollection.deleteMany({ email: user.email });

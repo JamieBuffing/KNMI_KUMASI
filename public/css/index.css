@@ -7,37 +7,6 @@
   border-bottom: none;
 }
 
-/* Header */
-.page-home .site-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px;
-}
-
-.page-home .site-header__left {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.page-home .site-header__right {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.page-home .header-button {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  font-size: 22px;
-  line-height: 1;
-}
-
 /* Info / title row */
 .page-home .info-btn {
   width: 32px;
