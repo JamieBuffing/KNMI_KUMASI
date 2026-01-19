@@ -109,7 +109,54 @@ app.get("/api-key/success", getApiKeySuccess);
 
 // -------------------- APIs --------------------
 app.use("/api/public", publicApi);
-app.use("/api", adminApi);
+// app.use("/api", adminApi);
+
+// -------------------- Post --------------------
+app.post("/newBatch", requireUserInUsers, async (req, res) => {
+  console.log(req.body)
+});
+app.post("/editpoint", requireUserInUsers, async (req, res) => {
+  console.log(req.body)
+});
+app.post("/togglepoint", requireUserInUsers, async (req, res, next) => {
+  try {
+    const raw = req.query.point;
+    const pointNumber = Number(raw);
+
+    if (!Number.isFinite(pointNumber)) {
+      return res.status(400).send("Invalid point number");
+    }
+
+    const db = await getDb();
+    const collection = db.collection("Data");
+
+    const filter = {
+      $or: [
+        { point_number: pointNumber },
+        { point_number: String(pointNumber) },
+      ],
+    };
+
+    const result = await collection.updateOne(
+      filter,
+      [
+        {
+          $set: {
+            active: { $not: [{ $ifNull: ["$active", false] }] }
+          }
+        }
+      ]
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).send("Point not found");
+    }
+
+    return res.redirect("/beheer");
+  } catch (err) {
+    return next(err);
+  }
+});
 
 // -------------------- downloads --------------------
 app.get("/downloads/data.json", getDownloadJson);

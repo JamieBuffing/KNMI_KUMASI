@@ -22,18 +22,39 @@
         </section>
         <section>
             <h2>Statistics</h2>
-            <div class="stats-grid">
+            <div class="statsGrid">
                 <div class="stat">
-                    <span class="stat-label">Measurement points</span>
-                    <span class="stat-value" id="stat-points">–</span>
+                    <span class="statLabel">Measurement points</span>
+                    <span class="statValue" id="statPoints">–</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-label">Total measurements</span>
-                    <span class="stat-value" id="stat-measurements">–</span>
+                    <span class="statLabel">Total measurements</span>
+                    <span class="statValue" id="statMeasurements">–</span>
+
+                    <hr>
+
+                    <div class="statRow">
+                        <div>
+                            <span class="statLabel">Succeeded</span>
+                            <span class="statValue" id="statMeasurementsGood">–</span>
+                        </div>
+                        <div>
+                            <span class="statLabel">Failed</span>
+                            <span class="statValue" id="statMeasurementsFaulty">–</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="stat">
-                    <span class="stat-label">Year range</span>
-                    <span class="stat-value" id="stat-years">–</span>
+                    <span class="statLabel">Lowest value</span>
+                    <span class="statValue" id="statLow">–</span>
+                </div>
+                <div class="stat">
+                    <span class="statLabel">Highest value</span>
+                    <span class="statValue" id="statHigh">–</span>
+                </div>
+                <div class="stat">
+                    <span class="statLabel">Year range</span>
+                    <span class="statValue" id="statYears">–</span>
                 </div>
             </div>
         </section>
@@ -42,7 +63,7 @@
             <p>
                 Enter a value for each point, or select “No measurement possible”. Please complete all rows.
             </p>
-            <form action="/" method="POST">
+            <form action="/newBatch" method="POST">
             <section id="dateControl">
                 <label for="batchYear">
                     <span>Year</span>
@@ -69,48 +90,15 @@
                 <button type="submit" class="">Save measurements</button>
                     <span id="batchStatus" class="formStatus" aria-live="polite"></span>
                 <section id="batchInput">
-                    <article>
-                        <h3>Location</h3>
-                        <label>Tube ID</label>
-                        <label>Value (µg/m³)</label>
-                        <input name="inputTube" type="text" placeholder="B3" required>
-                        <input name="inputValue" type="number" step="1" placeholder="23,35" required>
-                        <label class="batchNoMeasurement">
-                            <input type="checkbox" class="NMP">
-                            <span>No measurement possible</span>
-                        </label>
-                    </article>
-                    <article>
-                        <h3>Location</h3>
-                        <label>Tube ID</label>
-                        <label>Value (µg/m³)</label>
-                        <input name="inputTube" type="text" placeholder="B3" required>
-                        <input name="inputValue" type="number" step="1" placeholder="23,35" required>
-                        <label class="batchNoMeasurement">
-                            <input type="checkbox" class="NMP">
-                            <span>No measurement possible</span>
-                        </label>
-                    </article>
+                    
                 </section>
             </form>
         </section>
         <section id="measurementPoints">
             <h2>Measurement points</h2>
-            <article>
-                <h3>Locatie</h3>
-                <span>status</span>
-                <p class="div3">Coordinates</p>
-                <p class="div4">City</p>
-                <p class="div5">Lat:</p>
-                <p class="div6">Lon:</p>
-                <p class="div7">Kumasi</p>
-                <p class="div8">Measurements</p>
-                <p class="div9">Period</p>
-                <p class="div10">7</p>
-                <p class="div11">2025-05 to 2025-10</p>
-                <form class="div12" action="/" method="post"><button>Edit</button></form>
-                <form class="div13" action="/" method="post"><button>Deactivate</button></form>
-            </article>
+            <section id="batchpoints">
+                
+            </section>
         </section>
         <section id="adminEmails">
             <h2>Authorized email addresses</h2>
@@ -122,7 +110,10 @@
         </section>
     </main>
     <!-- <script src="/js/beheerOUD.js" defer></script> -->
-     <script src="/js/beheer.js"></script>
+    <script id="boot-data" type="application/json">
+        <%- JSON.stringify({ keuzes: keuzes || [], points: initialPoints || [] }) %>
+    </script>
+    <script src="/js/beheer.js"></script>
 <script>
   window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
 </script>
