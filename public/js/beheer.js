@@ -1,5 +1,6 @@
 const dataRAW = document.getElementById("boot-data");
 const data = dataRAW ? JSON.parse(dataRAW.textContent) : { keuzes: {}, points: [] };
+console.log(data.points)
 const pointsNR = data.points.length;
 
 const values = data.points.flatMap(p =>

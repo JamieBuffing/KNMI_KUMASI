@@ -109,12 +109,109 @@ app.get("/api-key/success", getApiKeySuccess);
 
 // -------------------- APIs --------------------
 app.use("/api/public", publicApi);
-// app.use("/api", adminApi);
 
 // -------------------- Post --------------------
-app.post("/newBatch", requireUserInUsers, async (req, res) => {
-  console.log(req.body)
+app.post("/newBatch", requireUserInUsers, async (req, res, next) => {
+  try {
+    const year = Number(req.body.batchYear);
+    const month = Number(req.body.batchMonth); // 1..12
+
+    if (!Number.isFinite(year) || year < 2000 || year > 2100) {
+      return res.status(400).send("Invalid batchYear");
+    }
+    if (!Number.isFinite(month) || month < 1 || month > 12) {
+      return res.status(400).send("Invalid batchMonth");
+    }
+
+    // Batch date = first day of selected month at local midnight
+    const batchDate = new Date(year, month - 1, 1);
+    batchDate.setHours(0, 0, 0, 0);
+
+    // Not in the future (compare to today 00:00)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (batchDate > today) {
+      return res.status(400).send("Batch month cannot be in the future");
+    }
+
+    // Parse body keys: inputTube_<nr>, inputValue_<nr>, nmp_<nr>
+    const pointNumbers = new Set();
+    for (const key of Object.keys(req.body)) {
+      let m = key.match(/^inputTube_(\d+)$/);
+      if (m) pointNumbers.add(Number(m[1]));
+      m = key.match(/^inputValue_(\d+)$/);
+      if (m) pointNumbers.add(Number(m[1]));
+      m = key.match(/^nmp_(\d+)$/);
+      if (m) pointNumbers.add(Number(m[1]));
+    }
+
+    if (pointNumbers.size === 0) {
+      return res.status(400).send("No batch inputs found");
+    }
+
+    const db = await getDb();
+    const collection = db.collection("Data");
+
+    const ops = [];
+
+    for (const pn of pointNumbers) {
+      if (!Number.isFinite(pn)) continue;
+
+      const tubeRaw = (req.body[`inputTube_${pn}`] ?? "").trim();
+      const valueRaw = req.body[`inputValue_${pn}`];
+      const nmp = req.body[`nmp_${pn}`] === "on" || req.body[`nmp_${pn}`] === true;
+
+      let measurement;
+
+      if (nmp) {
+        measurement = { date: batchDate, noMeasurement: true };
+      } else {
+        const value = valueRaw === "" || valueRaw == null ? NaN : Number(valueRaw);
+        if (!Number.isFinite(value)) {
+          return res.status(400).send(`Invalid value for point ${pn}`);
+        }
+        if (!tubeRaw) {
+          return res.status(400).send(`Missing tube id for point ${pn}`);
+        }
+        measurement = { date: batchDate, tube_id: tubeRaw, value };
+      }
+
+      // filter matches both numeric and string stored point_number (same as your other routes)
+      const filter = {
+        $or: [{ point_number: pn }, { point_number: String(pn) }],
+      };
+
+      // Replace existing measurement for this month if present, otherwise add.
+      // Easiest + reliable: pull then push.
+      ops.push({
+        updateOne: {
+          filter,
+          update: {
+            $pull: { measurements: { date: batchDate } },
+          },
+        },
+      });
+
+      ops.push({
+        updateOne: {
+          filter,
+          update: {
+            $push: { measurements: measurement },
+          },
+        },
+      });
+    }
+
+    const result = await collection.bulkWrite(ops, { ordered: true });
+
+    // terug naar beheer
+    return res.redirect("/beheer");
+  } catch (err) {
+    console.error("POST /newBatch failed:", err);
+    return next(err);
+  }
 });
+
 
 function parseISODateToLocalMidnight(iso) {
   // iso: "YYYY-MM-DD"

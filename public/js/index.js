@@ -23,7 +23,7 @@ const kleuren = {
 const SCALE_PRESETS = {
   WHO: { key: "WHO", label: "WHO", annual: 10, colorMax: 20 },
   EU: { key: "EU", label: "EU", annual: 40, colorMax: 80 },
-  DATA: { key: "DATA", label: "Data", annual: null, colorMax: null }
+  DATA: { key: "RELATIVE", label: "Relative", annual: null, colorMax: null }
 };
 
 let activeScale = { key: "EU", label: "EU", annual: 40, colorMax: 80 };
