@@ -913,6 +913,17 @@ function openPointOverlay(point, year, monthIndex) {
 
       <!-- Details -->
       <details class="popup__details">
+        <summary>Details</summary>
+        <div class="popup__detailsBody">
+          <div><strong>Scale:</strong> ${activeScale.key}</div>
+          <div><strong>Color max:</strong> ${max ? max.toFixed(2) : "—"} µg/m³</div>
+          <div><strong>Coordinates:</strong> lat ${point.coordinates?.lat ?? "—"}, lon ${point.coordinates?.lon ?? "—"}</div>
+          <div><strong>Tube:</strong> ${(point.measurements?.find(m => m?.tube_id)?.tube_id ?? "—")}</div>
+        </div>
+      </details>
+
+      <!-- What does this mean? -->
+      <details class="popup__details">
         <summary>What does this mean?</summary>
         <div class="popup__detailsBody">
           <div><strong>Scale:</strong> ${activeScale.key}</div>
