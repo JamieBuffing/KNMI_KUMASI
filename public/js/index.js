@@ -594,7 +594,7 @@ const menuBottomRight = createMenu("bottomright", `
   <div class="scale-control leaflet-control">
     <button class="scaleWHO is-active" type="button" data-preset="WHO">WHO</button>
     <button class="scaleEU" type="button" data-preset="EU">EU</button>
-    <button class="scaleData" type="button" data-preset="DATA" title="">Data</button>
+    <button class="scaleData" type="button" data-preset="DATA" title="">Relative</button>
   </div>
 `);
 
