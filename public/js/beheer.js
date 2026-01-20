@@ -1,6 +1,5 @@
 const dataRAW = document.getElementById("boot-data");
 const data = dataRAW ? JSON.parse(dataRAW.textContent) : { keuzes: {}, points: [] };
-                                                                                              console.log(data)
 const pointsNR = data.points.length;
 
 const values = data.points.flatMap(p =>
@@ -48,6 +47,10 @@ const measurementYears = new Set(
     )
   )
 );
+
+const d = new Date();
+document.getElementById("batchYear").value = d.getFullYear();
+document.getElementById("batchMonth").value = String(d.getMonth() + 1);
 
 const yearRange = measurementYears.size;
 
@@ -125,6 +128,32 @@ data.points.forEach(point => {
   batchInput.append(article);
 });
 
+const adminEmails = document.getElementById("adminEmails");
+
+data.users.forEach(user => {
+  const article = document.createElement("article");
+  article.dataset.user = user.email;
+
+  const p1 = document.createElement("p");
+  p1.textContent = user.email;
+
+  const p2 = document.createElement("p");
+  p2.textContent = `Created at: ${user.createdAt.slice(0, 10)}`;
+
+  const form = document.createElement("form");
+  form.action = `/DelUser?user=${encodeURIComponent(user.email)}`;
+  form.method = "post";
+
+  const button = document.createElement("button");
+  button.classList.add("saveBatch");
+  button.type = "submit";
+  button.textContent = "Remove";
+
+  form.append(button);
+  article.append(p1, p2, form);
+  adminEmails.append(article);
+});
+
 data.points.forEach(point => {
   const article = document.createElement("article");
   article.dataset.pointNumber = point.point_number;
@@ -189,23 +218,22 @@ data.points.forEach(point => {
     ? `${start.slice(0, 7)} to ${end.slice(0, 7)}`
     : "–";
 
-  const formEdit = document.createElement("form");
-  formEdit.className = "div12";
-  formEdit.action = `/editpoint?point=${point.point_number}`;
-  formEdit.method = "post";
 
-  const btnEdit = document.createElement("button");
-  btnEdit.type = "submit";
+  const btnEdit = document.createElement("button")
+  btnEdit.type = "button"
   btnEdit.textContent = "Edit";
-  formEdit.append(btnEdit);
+  btnEdit.classList = "saveBatch"
+  btnEdit.addEventListener("click", () => window.openEditPointModal?.(point));
 
   const formDeactivate = document.createElement("form");
   formDeactivate.className = "div13";
   formDeactivate.action = `/togglepoint?point=${point.point_number}`;
   formDeactivate.method = "post";
+  formDeactivate.classList = "clean"
 
   const btnDeactivate = document.createElement("button");
   btnDeactivate.type = "submit";
+  btnDeactivate.classList = "saveBatch"
   btnDeactivate.textContent = point.active ? "Deactivate" : "Activate";
 
   formDeactivate.append(btnDeactivate);
@@ -216,9 +244,276 @@ data.points.forEach(point => {
     status,
     p3, p4, p5, p6, p7,
     p8, p9, p10, p11,
-    formEdit,
+    btnEdit,
     formDeactivate
   );
 
   measurementPoints.append(article);
 });
+
+
+function toDateInputValue(d) {
+  if (!d) return "";
+  const dt = (d instanceof Date) ? d : new Date(d);
+  if (Number.isNaN(dt.getTime())) return "";
+  return dt.toISOString().slice(0, 10);
+}
+
+function addMeasurementRow(rowsEl, m = {}, index = 0) {
+  const row = document.createElement("div");
+  row.className = "measurementRow";
+
+  const hasNoMeas = Boolean(m.noMeasurement);
+
+  row.innerHTML = `
+    <input type="date" name="measurements[${index}][date]" value="${toDateInputValue(m.date)}" required />
+
+    <label class="noMeasToggle">
+      <input type="checkbox" name="measurements[${index}][noMeasurement]" ${hasNoMeas ? "checked" : ""} />
+      <span>No measurement</span>
+    </label>
+
+    <input type="text" name="measurements[${index}][tube_id]" value="${m.tube_id ?? ""}" placeholder="tube id" />
+    <input type="number" step="any" name="measurements[${index}][value]" value="${m.value ?? ""}" placeholder="value" />
+
+    <button type="button" class="removeRow" aria-label="Remove measurement">×</button>
+  `;
+
+  const cb = row.querySelector('input[type="checkbox"][name^="measurements"]');
+  const tube = row.querySelector('input[name$="[tube_id]"]');
+  const val = row.querySelector('input[name$="[value]"]');
+
+  const applyNoMeasState = () => {
+    const on = cb.checked;
+    if (on) {
+      // disable + clear value (en desgewenst tube_id)
+      val.value = "";
+      val.disabled = true;
+
+      tube.value = "";
+      tube.disabled = true;
+    } else {
+      val.disabled = false;
+      tube.disabled = false;
+    }
+  };
+
+  cb.addEventListener("change", applyNoMeasState);
+  applyNoMeasState();
+
+  row.querySelector(".removeRow").addEventListener("click", () => {
+    row.remove();
+    reindexMeasurementRows(rowsEl);
+  });
+
+  rowsEl.appendChild(row);
+}
+
+
+function reindexMeasurementRows(rowsEl) {
+  const rows = Array.from(rowsEl.querySelectorAll(".measurementRow"));
+  rows.forEach((row, idx) => {
+    row.querySelectorAll("input").forEach((inp) => {
+      inp.name = inp.name.replace(/measurements\[\d+\]/, `measurements[${idx}]`);
+    });
+  });
+}
+
+function initEditPointModal() {
+  const modal = document.getElementById("editPointModal");
+  const form = document.getElementById("editPointForm");
+  const btnClose = document.getElementById("editPointClose");
+  const btnCancel = document.getElementById("editPointCancel");
+  const rowsEl = document.getElementById("measurementRows");
+
+  if (!modal || !form || !btnClose || !btnCancel || !rowsEl) return;
+
+  const close = () => {
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+    rowsEl.innerHTML = "";
+  };
+
+  const open = (point) => {
+    document.getElementById("editPointTitle").textContent = `Edit point ${point.point_number}`;
+    document.getElementById("editPointNumber").value = point.point_number ?? "";
+
+    document.getElementById("editLocation").value = point.location ?? "";
+    document.getElementById("editLat").value = point.coordinates?.lat ?? "";
+    document.getElementById("editLon").value = point.coordinates?.lon ?? "";
+    document.getElementById("editDescription").value = point.description ?? "";
+
+    form.action = `/editpoint?point=${encodeURIComponent(point.point_number)}`;
+
+    rowsEl.innerHTML = "";
+    const ms = Array.isArray(point.measurements) ? point.measurements : [];
+    ms.forEach((m, i) => addMeasurementRow(rowsEl, m, i));
+
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    setTimeout(() => document.getElementById("editLocation")?.focus(), 0);
+  };
+
+  btnClose.addEventListener("click", close);
+  btnCancel.addEventListener("click", close);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.classList.contains("hidden")) close();
+  });
+
+  window.openEditPointModal = open;
+}
+
+function isoDateToday() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function initNewPointModal() {
+  const modal = document.getElementById("newPointModal");
+  const form = document.getElementById("newPointForm");
+  const btnOpen = document.getElementById("newPointBtn");
+  const btnClose = document.getElementById("newPointClose");
+  const btnCancel = document.getElementById("newPointCancel");
+
+  if (!modal || !form || !btnOpen || !btnClose || !btnCancel) return;
+
+  const close = () => {
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+    form.reset();
+  };
+
+  const open = () => {
+    // next point number = max + 1 (alleen UI; server bepaalt uiteindelijk)
+    const maxNr = (data.points || []).reduce(
+      (m, p) => Math.max(m, Number(p.point_number) || 0),
+      0
+    );
+    document.getElementById("newPointNumber").value = String(maxNr + 1);
+
+    // defaults
+    document.getElementById("newPointCity").value = data.keuzes?.["Gekozen stad"] || "";
+    document.getElementById("newPointActive").checked = true;
+
+    // start_date: alleen 1e van de maand selectable via maand+jaar
+    const monthEl = document.getElementById("newPointStartMonth");
+    const yearEl = document.getElementById("newPointStartYear");
+    const hiddenEl = document.getElementById("newPointStartDate"); // wordt gepost
+    const previewEl = document.getElementById("newPointStartDatePreview"); // UI
+
+    if (monthEl && yearEl && hiddenEl && previewEl) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const todayYear = today.getFullYear();
+      const todayMonth = today.getMonth(); // 0-11
+
+      // default = huidige maand/jaar
+      monthEl.value = String(todayMonth);
+      yearEl.value = String(todayYear);
+
+      const updateMonthOptionLocks = () => {
+        const yy = Number(yearEl.value);
+
+        // als jaar in de toekomst -> terug naar dit jaar
+        if (yy > todayYear) yearEl.value = String(todayYear);
+
+        const finalYear = Number(yearEl.value);
+
+        // future maanden uitzetten als jaar == dit jaar
+        Array.from(monthEl.options).forEach(opt => {
+          const m = Number(opt.value); // 0-11
+          opt.disabled = (finalYear === todayYear) ? (m > todayMonth) : false;
+        });
+
+        // als huidige selectie future is geworden -> terug naar laatste geldige maand
+        if (finalYear === todayYear && Number(monthEl.value) > todayMonth) {
+          monthEl.value = String(todayMonth);
+        }
+      };
+
+      const syncStartDate = () => {
+        updateMonthOptionLocks();
+
+        const yy = Number(yearEl.value);
+        const mm = Number(monthEl.value);
+
+        const yyyy = String(yy).padStart(4, "0");
+        const mm2 = String(mm + 1).padStart(2, "0");
+        const value = `${yyyy}-${mm2}-01`;
+
+        hiddenEl.value = value;   // wordt gepost
+        previewEl.value = value;  // UI
+        previewEl.max = today.toISOString().slice(0, 10);
+      };
+
+      // init + listeners
+      syncStartDate();
+      monthEl.onchange = syncStartDate;
+      yearEl.oninput = syncStartDate;
+    }
+
+
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    setTimeout(() => document.getElementById("newPointLocation")?.focus(), 0);
+  };
+
+
+  btnOpen.addEventListener("click", open);
+  btnClose.addEventListener("click", close);
+  btnCancel.addEventListener("click", close);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.classList.contains("hidden")) close();
+  });
+}
+
+initNewPointModal();
+initEditPointModal();
+
+
+
+
+const searchInput = document.getElementById("searchPoints");
+const batchPoints = document.getElementById("batchpoints");
+
+console.log("searchInput:", searchInput);
+console.log("batchPoints:", batchPoints);
+
+if (!searchInput || !batchPoints) {
+  console.warn("Search or batchpoints not found (script runs too early?)");
+} else {
+  const noResults = document.createElement("p");
+  noResults.textContent = "No measurement points found";
+  noResults.style.display = "none";
+  batchPoints.after(noResults);
+
+  searchInput.addEventListener("input", () => {
+    const query = searchInput.value.toLowerCase().trim();
+    console.log("typed:", query);
+
+    let visibleCount = 0;
+
+    for (const item of batchPoints.children) {
+      const locationEl = item.querySelector(".location");
+      const locationText = (locationEl ? locationEl.textContent : "").toLowerCase();
+
+      // leeg -> alles tonen
+      const match = query === "" || locationText.includes(query);
+
+      item.style.display = match ? "" : "none";
+      if (match) visibleCount++;
+    }
+
+    noResults.style.display = visibleCount === 0 ? "block" : "none";
+  });
+}

@@ -10,7 +10,7 @@ main {
 main > section {
     width: auto;
     padding: 10px;
-    margin: 10px 0px;
+    margin: 20px 0px;
     border: solid 1px var(--color-border);
     border-radius: 10px;
 }
@@ -31,15 +31,27 @@ main section article a {
     font-weight: bold;
 }
 #dateControl {
-    display: grid;
-    grid-template-columns: 49% 49%;
-    grid-template-rows: repeat(2, auto);
-    grid-column-gap: 2%;
-    grid-row-gap: 0px;
+  display: grid;
+  grid-template-columns: 49% 49%;
+  grid-template-rows: repeat(2, auto);
+  grid-column-gap: 2%;
+  grid-row-gap: 0px;
 }
 #batchInput {
-    max-height: 70vh;
-    overflow-y: scroll;
+  max-height: 70vh;
+  overflow-y: scroll;
+}
+.saveBatch {
+  border: solid 1px var(--color-border);
+  border-radius: 10px;
+  background-color: var(--color-header);
+  color: var(--color-bg);
+  padding: 6px 10px;
+  margin: 5px 0px;
+  width: -webkit-fill-available;
+}
+.clean {
+  border: none;
 }
 #batchInput article {
     border: solid 1px var(--color-border);
@@ -68,6 +80,23 @@ main section article a {
     grid-column-gap: 15px;
     grid-row-gap: 5px;
     margin-bottom: 10px;
+}
+#measurementPoints div {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+}
+#measurementPoints div input, button {
+  border: solid 1px var(--color-border);
+  border-radius: 10px;
+  background-color: var(--color-header);
+  color: var(--color-bg);
+  padding: 6px 10px;
+  margin: 5px 0px;
+}
+#measurementPoints div input {
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 #measurementPoints article h3 {
     grid-area: 1 / 1 / 2 / 4;
@@ -105,9 +134,25 @@ main section article a {
     display: grid;
     grid-template-columns: 2fr 1fr;
     grid-template-rows: repeat(2, auto);
-    grid-column-gap: 50px;
     grid-row-gap: 5px;
     margin-bottom: 10px;
+}
+#adminEmails form {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+#adminEmails form input, button {
+  border: solid 1px var(--color-border);
+  border-radius: 10px;
+  background-color: var(--color-header);
+  color: var(--color-bg);
+  padding: 6px 10px;
+  margin: 5px 0px;
+}
+#adminEmails form input {
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 #adminEmails article p:first-of-type { grid-area: 1 / 1 / 2 / 2; }
 #adminEmails article p:last-of-type { grid-area: 2 / 1 / 3 / 2; }
@@ -146,6 +191,262 @@ main section article a {
   flex: 1;
 }
 
+:is(#editPointModal, #newPointModal) {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+/* hidden helper */
+:is(#editPointModal, #newPointModal).hidden {
+    display: none;
+}
+
+/* popup card */
+:is(#editPointModal, #newPointModal) .popup {
+    background: #fff;
+    width: min(720px, 100%);
+    max-height: 90vh;
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft, 0 10px 30px rgba(0,0,0,0.25));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin: 20px;
+}
+
+/* header */
+:is(#editPointModal, #newPointModal) .popupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #eee;
+}
+
+:is(#editPointModal, #newPointModal) .popupHeader h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* close button */
+:is(#editPointModal, #newPointModal) .closeBtn {
+  border: none;
+  background-color: #a1a1a1;;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+}
+:is(#editPointModal, #newPointModal) .closeBtn:hover {
+  opacity: 1;
+}
+
+/* body */
+:is(#editPointModal, #newPointModal) .popupBody {
+  padding: 16px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* generic field */
+:is(#editPointModal, #newPointModal) .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+:is(#editPointModal, #newPointModal) .field span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+}
+
+/* inputs */
+:is(#editPointModal, #newPointModal) input[type="text"],
+:is(#editPointModal, #newPointModal) input[type="number"],
+:is(#editPointModal, #newPointModal) input[type="date"],
+:is(#editPointModal, #newPointModal) textarea {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  min-width: 125px;
+}
+
+:is(#editPointModal, #newPointModal) textarea {
+  resize: vertical;
+}
+
+/* lat / lon row */
+:is(#editPointModal, #newPointModal) .fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* =========================
+   Measurements section
+   ========================= */
+
+#measurementRows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.measurementRow {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.measurementRow input {
+  width: 100%;
+}
+
+.measurementRow .removeRow {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.measurementRow .removeRow:hover {
+  opacity: 1;
+}
+
+/* =========================
+   Actions
+   ========================= */
+:is(#editPointModal, #newPointModal) .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+:is(#editPointModal, #newPointModal) .btnSecondary,
+:is(#editPointModal, #newPointModal) .btnPrimary {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  background: #a1a1a1;;
+}
+
+:is(#editPointModal, #newPointModal) .btnPrimary {
+  font-weight: 700;
+  border-color: #111;
+  background-color: var(--color-header);
+}
+
+:is(#editPointModal, #newPointModal) .btnSecondary:hover,
+:is(#editPointModal, #newPointModal) .btnPrimary:hover {
+  background: #f6f6f6;
+}
+
+.noMeasToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+}
+
+.noMeasToggle input {
+  width: 18px;
+  height: 18px;
+}
+
+/* =========================
+   Extra small phones (S8 ~360px)
+   ========================= */
+@media (max-width: 770px) {
+  :is(#editPointModal, #newPointModal) {
+    padding: 0; /* echt fullscreen */
+  }
+
+  :is(#editPointModal, #newPointModal) .popup {
+    border-radius: 0;
+    height: 100vh;
+    width: 100vw;
+    margin: 20px;
+  }
+
+  :is(#editPointModal, #newPointModal) .popupHeader {
+    padding: 12px 14px;
+  }
+
+  :is(#editPointModal, #newPointModal) .popupBody {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  /* inputs: comfortable for touch */
+  :is(#editPointModal, #newPointModal) input[type="text"],
+  :is(#editPointModal, #newPointModal) input[type="number"],
+  :is(#editPointModal, #newPointModal) input[type="date"],
+  :is(#editPointModal, #newPointModal) textarea {
+    font-size: 16px; /* iOS no-zoom, also good on Android */
+    padding: 12px 12px;
+  }
+
+  /* lat/lon: stack */
+  :is(#editPointModal, #newPointModal) .fieldRow {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* measurements: stack everything, no grid squeeze */
+  .measurementRow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  /* make remove button aligned and tappable */
+  .measurementRow .removeRow {
+    justify-self: end;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #fff;
+    opacity: 0.9;
+  }
+
+  /* actions: full width buttons */
+  :is(#editPointModal, #newPointModal) .actions {
+    gap: 10px;
+  }
+
+  :is(#editPointModal, #newPointModal) .btnSecondary,
+  :is(#editPointModal, #newPointModal) .btnPrimary {
+    flex: 1;
+    width: 100%;
+  }
+}
+
 .bold {
     font-weight: bold;
+}
+.hidden { 
+    display: none !important; 
 }

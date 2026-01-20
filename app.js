@@ -115,8 +115,166 @@ app.use("/api/public", publicApi);
 app.post("/newBatch", requireUserInUsers, async (req, res) => {
   console.log(req.body)
 });
-app.post("/editpoint", requireUserInUsers, async (req, res) => {
-  console.log(req.body)
+
+function parseISODateToLocalMidnight(iso) {
+  // iso: "YYYY-MM-DD"
+  const [y, m, d] = (iso || "").split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const dt = new Date(y, m - 1, d);
+  dt.setHours(0, 0, 0, 0);
+  return dt;
+}
+
+app.post("/newpoint", requireUserInUsers, async (req, res, next) => {
+  try {
+    const location = (req.body.location ?? "").trim();
+    const description = (req.body.description ?? "").trim();
+    const city = (req.body.city ?? "").trim();
+
+    const lat = Number(req.body.lat);
+    const lon = Number(req.body.lon);
+
+    const start_date_raw = (req.body.start_date ?? "").trim();
+    const start_date = parseISODateToLocalMidnight(start_date_raw);
+
+    // checkbox -> "on" als aangevinkt
+    const active = req.body.active === "on" || req.body.active === true;
+
+    if (!location) return res.status(400).send("Location is required");
+    if (!city) return res.status(400).send("City is required");
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      return res.status(400).send("Invalid coordinates");
+    }
+    if (!start_date || Number.isNaN(start_date.getTime())) {
+      return res.status(400).send("Invalid start_date");
+    }
+
+    // --- start_date rules ---
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (start_date > today) {
+      return res.status(400).send("Start date cannot be in the future");
+    }
+
+    if (start_date.getDate() !== 1) {
+      return res.status(400).send("Start date must be the first day of the month");
+    }
+
+    const db = await getDb();
+    const collection = db.collection("Data");
+
+    // volgende point_number
+    const maxAgg = await collection
+      .aggregate([
+        {
+          $project: {
+            pn: {
+              $convert: {
+                input: "$point_number",
+                to: "int",
+                onError: null,
+                onNull: null,
+              },
+            },
+          },
+        },
+        { $group: { _id: null, maxPn: { $max: "$pn" } } },
+      ])
+      .toArray();
+
+    const nextPointNumber = (maxAgg[0]?.maxPn ?? 0) + 1;
+
+    await collection.insertOne({
+      point_number: nextPointNumber,
+      location,
+      city,
+      coordinates: { lat, lon },
+      description,
+      start_date,
+      measurements: [],
+      active,
+    });
+
+    return res.redirect("/beheer");
+  } catch (err) {
+    console.error("POST /newpoint failed:", err);
+    return next(err);
+  }
+});
+
+app.post("/editpoint", requireUserInUsers, async (req, res, next) => {
+  try {
+    const raw = req.query.point;
+    const pointNumber = Number(raw);
+
+    if (!Number.isFinite(pointNumber)) {
+      return res.status(400).send("Invalid point number");
+    }
+
+    const location = (req.body.location ?? "").trim();
+    const description = (req.body.description ?? "").trim();
+
+    const lat = Number(req.body.lat);
+    const lon = Number(req.body.lon);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      return res.status(400).send("Invalid coordinates");
+    }
+
+    // Form arrays require: express.urlencoded({ extended: true })
+    const measurementsRaw = Array.isArray(req.body.measurements) ? req.body.measurements : [];
+
+    const cleanedMeasurements = measurementsRaw
+      .map((m) => {
+        const dt = m?.date ? new Date(m.date) : null;
+        if (!dt || Number.isNaN(dt.getTime())) return null;
+
+        // Checkbox komt binnen als "on" (string) als hij aangevinkt is
+        const noMeasurement = m?.noMeasurement === "on" || m?.noMeasurement === true;
+
+        const tube_id = (m?.tube_id ?? "").trim();
+
+        const valueRaw = m?.value;
+        const value = valueRaw === "" || valueRaw == null ? null : Number(valueRaw);
+
+        if (noMeasurement) {
+          // bij "no measurement" bewaren we expliciet die flag
+          return { date: dt, noMeasurement: true };
+        }
+
+        // geen noMeasurement => value moet geldig zijn
+        if (value === null || !Number.isFinite(value)) return null;
+
+        return { date: dt, tube_id, value };
+      })
+      .filter(Boolean);
+
+    const db = await getDb();
+    const collection = db.collection("Data");
+
+    // match zowel numeric als string opgeslagen point_number
+    const filter = {
+      $or: [{ point_number: pointNumber }, { point_number: String(pointNumber) }],
+    };
+
+    const result = await collection.updateOne(filter, {
+      $set: {
+        location,
+        description,
+        coordinates: { lat, lon },
+        measurements: cleanedMeasurements,
+      },
+    });
+
+    if (result.matchedCount === 0) {
+      return res.status(404).send("Point not found");
+    }
+
+    return res.redirect("/beheer");
+  } catch (err) {
+    return next(err);
+  }
 });
 app.post("/togglepoint", requireUserInUsers, async (req, res, next) => {
   try {
@@ -155,6 +313,48 @@ app.post("/togglepoint", requireUserInUsers, async (req, res, next) => {
     return res.redirect("/beheer");
   } catch (err) {
     return next(err);
+  }
+});
+
+app.post("/addUser", requireUserInUsers, async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).send("No user email provided");
+    }
+
+    const db = await getDb();
+    const usersCollection = db.collection("Users");
+
+    await usersCollection.insertOne({
+      email: email,
+      createdAt: new Date()
+    });
+
+    res.redirect("/beheer");
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+app.post("/DelUser", requireUserInUsers, async (req, res, next) => {
+  try {
+    const email = req.query.user;
+
+    if (!email) {
+      return res.status(400).send("No user email provided");
+    }
+
+    const db = await getDb();
+    const usersCollection = db.collection("Users");
+
+    await usersCollection.deleteOne({ email });
+
+    res.redirect("/beheer");
+  } catch (err) {
+    next(err);
   }
 });
 

@@ -4,7 +4,6 @@ const tableView = document.getElementById("tableView");
 const mapView = document.getElementById("mapView");
 const dataRAW = document.getElementById("boot-data");
 const data = dataRAW ? JSON.parse(dataRAW.textContent) : { keuzes: {}, points: [] };
-console.log(data.points);
 
 let selectedYear;
 let selectedMonthIndex;
@@ -210,12 +209,10 @@ function changeScale(activeButton) {
   if (!preset || !SCALE_PRESETS[preset]) return;
 
   activeScale = SCALE_PRESETS[preset];
-  console.log("Active scale:", activeScale);
   updateMarkers();
 }
 
 function DrawMarkers() {
-  console.log(data.points);
 }
 
 function createMenu(position, html) {
@@ -642,8 +639,6 @@ syncScaleButtons();
 maakLegenda();
 
 function updateMarkers() {
-  console.log("Markers maken voor: ", monthNames[selectedMonthIndex], selectedYear);
-  console.log("Met de schaal: ", activeScale.key);
 
   markerLayer.clearLayers();
 

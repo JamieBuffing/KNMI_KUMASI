@@ -68,11 +68,11 @@
                 <label for="batchYear">
                     <span>Year</span>
                 </label>
-                <label>
+                <label for="batchMonth">
                     <span>Month</span>
                 </label>
                 <input type="number" id="batchYear" min="2000" step="1" required>
-                <select id="batchMonth" required>
+                <select id="batchMonth" required value="3">
                     <option value="1">January</option>
                     <option value="2">February</option>
                     <option value="3">March</option>
@@ -85,9 +85,9 @@
                     <option value="10">October</option>
                     <option value="11">November</option>
                     <option value="12">December</option>
-                    </select>
+                </select>
             </section>
-                <button type="submit" class="">Save measurements</button>
+                <button type="submit" class="saveBatch" class="">Save measurements</button>
                     <span id="batchStatus" class="formStatus" aria-live="polite"></span>
                 <section id="batchInput">
                     
@@ -96,22 +96,149 @@
         </section>
         <section id="measurementPoints">
             <h2>Measurement points</h2>
+            <p>Add email adress</p>
+            <div>
+                <input id="searchPoints" type="search" placeholder="Search by location" autocomplete="off">
+                <button type="button" id="newPointBtn">New point</button>
+            </div>
             <section id="batchpoints">
                 
             </section>
         </section>
         <section id="adminEmails">
             <h2>Authorized email addresses</h2>
-            <article>
-                <p>example@mail.com</p>
-                <p>Created at: yyyy-mm-dd</p>
-                <form action="/" method="post"><button>Remove</button></form>
-            </article>
+            <p>Add email adress</p>
+            <form action="/addUser" method="post">
+                <input id="addmail" name="email" type="text" placeholder="name@example.com">
+                <button type="submit">Add</button>
+            </form>
         </section>
     </main>
+<div id="editPointModal" class="hidden" aria-hidden="true">
+  <div class="popup" role="dialog" aria-modal="true" aria-labelledby="editPointTitle">
+    <header class="popupHeader">
+      <h2 id="editPointTitle">Edit point</h2>
+      <button type="button" id="editPointClose" class="closeBtn" aria-label="Close">×</button>
+    </header>
+    <form id="editPointForm" method="post" class="popupBody">
+      <input type="hidden" name="point_number" id="editPointNumber" />
+
+      <label class="field">
+        <span>Location</span>
+        <input name="location" id="editLocation" type="text" required />
+      </label>
+
+      <div class="fieldRow">
+        <label class="field">
+          <span>Latitude</span>
+          <input name="lat" id="editLat" type="number" step="any" required />
+        </label>
+        <label class="field">
+          <span>Longitude</span>
+          <input name="lon" id="editLon" type="number" step="any" required />
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Description</span>
+        <textarea name="description" id="editDescription" rows="3"></textarea>
+      </label>
+
+      <section class="field">
+        <span>Measurements</span>
+        <div id="measurementRows"></div>
+    </section>
+
+      <div class="actions">
+        <button type="button" id="editPointCancel" class="btnSecondary">Cancel</button>
+        <button type="submit" class="btnPrimary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div id="newPointModal" class="hidden" aria-hidden="true">
+  <div class="popup" role="dialog" aria-modal="true" aria-labelledby="newPointTitle">
+    <header class="popupHeader">
+      <h2 id="newPointTitle">New point</h2>
+      <button type="button" id="newPointClose" class="closeBtn" aria-label="Close">×</button>
+    </header>
+
+    <form id="newPointForm" method="post" action="/newpoint" class="popupBody">
+      <label class="field">
+        <input name="point_number" id="newPointNumber" type="hidden" min="1" step="1" required />
+      </label>
+
+      <label class="field">
+        <span>Location</span>
+        <input name="location" id="newPointLocation" type="text" required />
+      </label>
+
+      <label class="field">
+        <span>City</span>
+        <input name="city" id="newPointCity" type="text" required />
+      </label>
+
+      <div class="fieldRow">
+        <label class="field">
+          <span>Latitude</span>
+          <input name="lat" id="newPointLat" type="number" step="any" required />
+        </label>
+        <label class="field">
+          <span>Longitude</span>
+          <input name="lon" id="newPointLon" type="number" step="any" required />
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Description</span>
+        <textarea name="description" id="newPointDescription" rows="3"></textarea>
+      </label>
+
+      <label class="field">
+        <span>Start month</span>
+
+        <div class="fieldRow">
+            <select id="newPointStartMonth" class="startMonth" required>
+            <option value="0">January</option>
+            <option value="1">February</option>
+            <option value="2">March</option>
+            <option value="3">April</option>
+            <option value="4">May</option>
+            <option value="5">June</option>
+            <option value="6">July</option>
+            <option value="7">August</option>
+            <option value="8">September</option>
+            <option value="9">October</option>
+            <option value="10">November</option>
+            <option value="11">December</option>
+            </select>
+
+            <input id="newPointStartYear" class="startYear" type="number" min="2000" max="2100" required />
+        </div>
+
+        <!-- voor de gebruiker (altijd 1e) -->
+        <input id="newPointStartDatePreview" type="date" disabled />
+
+        <!-- echte waarde die gepost wordt -->
+        <input name="start_date" id="newPointStartDate" type="hidden" required />
+      </label>
+
+
+      <label class="noMeasToggle">
+        <input type="checkbox" name="active" id="newPointActive" checked />
+        <span>Active</span>
+      </label>
+
+      <div class="actions">
+        <button type="button" id="newPointCancel" class="btnSecondary">Cancel</button>
+        <button type="submit" class="btnPrimary">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
     <!-- <script src="/js/beheerOUD.js" defer></script> -->
     <script id="boot-data" type="application/json">
-        <%- JSON.stringify({ keuzes: keuzes || [], points: initialPoints || [] }) %>
+        <%- JSON.stringify({ keuzes: keuzes || [], users: users || [], points: initialPoints || [] }) %>
     </script>
     <script src="/js/beheer.js"></script>
 <script>
