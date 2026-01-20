@@ -913,7 +913,7 @@ function openPointOverlay(point, year, monthIndex) {
 
       <!-- Details -->
       <details class="popup__details">
-        <summary>Details</summary>
+        <summary>What does this mean?</summary>
         <div class="popup__detailsBody">
           <div><strong>Scale:</strong> ${activeScale.key}</div>
           <div><strong>Color max:</strong> ${max ? max.toFixed(2) : "—"} µg/m³</div>
