@@ -23,18 +23,6 @@
   text-decoration: none;
 }
 
-.page-home .chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--DEF-Background);
-  border: 1px solid var(--DEF-border);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--DEF-Blue-Styling);
-}
-
 .view-toggle {
   display: inline-flex;
   background: var(--DEF-Background);

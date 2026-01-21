@@ -3,7 +3,6 @@
 <head>
     <%- include('../partials/head'); %>
     <title>Admin</title>
-    <link rel="stylesheet" href="/css/beheerOUD.css">
     <link rel="stylesheet" href="/css/beheer.css">
 </head>
 <body>
@@ -236,7 +235,6 @@
     </form>
   </div>
 </div>
-    <!-- <script src="/js/beheerOUD.js" defer></script> -->
     <script id="boot-data" type="application/json">
         <%- JSON.stringify({ keuzes: keuzes || [], users: users || [], points: initialPoints || [] }) %>
     </script>

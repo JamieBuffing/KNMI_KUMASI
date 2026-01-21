@@ -371,7 +371,3 @@ body.overlay-open {
   color: var(--DEF-Grey-Tekst); 
   background: var(--DEF-Background); 
 }
-
-.popup__table tr.is-selected td { 
-  background: var(--DEF-Background); 
-}

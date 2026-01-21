@@ -204,17 +204,6 @@ function buildWindowAround(rows, year, monthIndex, beforeCount = 5, afterCount =
   return { windowRows: rows.slice(start, end), selectedExists: true };
 }
 
-function changeScale(activeButton) {
-  const preset = activeButton?.dataset?.preset; // "WHO" | "EU" | "DATA"
-  if (!preset || !SCALE_PRESETS[preset]) return;
-
-  activeScale = SCALE_PRESETS[preset];
-  updateMarkers();
-}
-
-function DrawMarkers() {
-}
-
 function createMenu(position, html) {
   const control = L.control({ position });
 
@@ -1291,12 +1280,6 @@ const tableState = {
 // ✅ NEW: globale settings (alleen bewerkbaar als card open is)
 const tableWindowSettings = { before: 5, after: 5 };
 let tableSettingsOpen = false;
-
-function clampInt(n, min, max) {
-  const v = Number(n);
-  if (!Number.isFinite(v)) return min;
-  return Math.max(min, Math.min(max, Math.trunc(v)));
-}
 
 function escapeHtml(str) {
   return String(str ?? "")

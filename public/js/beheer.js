@@ -369,10 +369,6 @@ function initEditPointModal() {
   window.openEditPointModal = open;
 }
 
-function isoDateToday() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function initNewPointModal() {
   const modal = document.getElementById("newPointModal");
   const form = document.getElementById("newPointForm");
