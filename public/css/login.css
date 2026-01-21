@@ -1,46 +1,37 @@
-/* ===== Algemene layout voor login / verification pagina's ===== */
-
 main {
-    height: 82%;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    justify-items: center;
+  height: 82%;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  justify-items: center;
 }
-
-/* Buitenste container zodat alles netjes in het midden komt */
 
 .auth-page {
   width: 100%;
   max-width: 420px;
 }
 
-/* De "card" rond het formulier */
-
 .auth-card {
-  background-color: #ffffff;
-  color: #000000;
+  background-color: var(--DEF-White);
+  color: var(--DEF-Black);
   border-radius: 16px;
   padding: 24px 28px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
-  border: 1px solid #e0e0e0;
+  box-shadow: var(--DEF-Box-Shadow);
+  border: 1px solid var(--DEF-Border);
 }
 
-/* Titel + subtitel */
-
 .auth-title {
-  color: var(--color-header);
+  color: var(--DEF-Blue-Tekst);
   font-size: 1.4rem;
   margin-bottom: 4px;
 }
 
 .auth-subtitle {
   font-size: 0.9rem;
-  color: var(--color-header);
+  color: var(--DEF-Blue-Tekst);
   margin-bottom: 18px;
+  text-align: center;
 }
-
-/* Formulier zelf */
 
 .auth-form {
   display: flex;
@@ -52,37 +43,33 @@ main {
   margin-bottom: 4px;
   display: block;
   font-weight: bold;
-  color: var(--color-header);
+  color: var(--DEF-Blue-Tekst);
 }
 
 .auth-input {
   width: 100%;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #c7c7c7;
+  border: 1px solid var(--DEF-Border);
   font-size: 0.95rem;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .auth-input:focus {
-  border-color: #0078a8;
+  border-color: var(--DEF-Blue-Styling);
   box-shadow: 0 0 0 2px rgba(0, 120, 168, 0.2);
-  background-color: #f9fcff;
+  background-color: var(--DEF-Background);
 }
 
-/* Foutmelding */
-
 .auth-error {
-  background-color: #ffe2e2;
+  background-color: var(--DEF-Background);
   color: #b30000;
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 0.85rem;
   margin-bottom: 10px;
 }
-
-/* Submit button */
 
 .auth-button {
   margin-top: 6px;
@@ -91,8 +78,8 @@ main {
   border-radius: 999px;
   border: none;
   cursor: pointer;
-  background: linear-gradient(135deg, var(--color-header), var(--color-accent));
-  color: #ffffff;
+  background-color: var(--DEF-Blue-Styling);
+  color: var(--DEF-White);
   font-weight: 600;
   font-size: 0.95rem;
   letter-spacing: 0.02em;
@@ -100,26 +87,22 @@ main {
 }
 
 .auth-button:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--DEF-Box-Shadow);
   transform: translateY(-1px);
 }
 
 .auth-button:active {
   transform: translateY(0);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--DEF-shadow-soft);
   opacity: 0.9;
 }
-
-/* Kleine extra tekst onder het formulier (optioneel) */
 
 .auth-footer-text {
   margin-top: 14px;
   font-size: 0.8rem;
-  color: #555555;
+  color: var(--DEF-Grey-Tekst);
   text-align: center;
 }
-
-/* Responsief: op hele kleine schermen wat minder padding */
 
 @media (max-width: 480px) {
   .auth-card {

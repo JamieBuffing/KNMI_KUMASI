@@ -7,20 +7,19 @@
   border-bottom: none;
 }
 
-/* Info / title row */
 .page-home .info-btn {
   width: 32px;
   height: 32px;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid rgba(0,0,0,0.2);
-  background: rgba(255,255,255,0.9);
+  border: 1px solid var(--DEF-border);
+  background: var(--DEF-Background);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 14px;
-  color: var(--color-header);
+  color: var(--DEF-Blue-Styling);
   text-decoration: none;
 }
 
@@ -29,17 +28,16 @@
   align-items: center;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #eef2f6;
-  border: 1px solid rgba(0,0,0,0.12);
+  background: var(--DEF-Background);
+  border: 1px solid var(--DEF-border);
   font-size: 12px;
   font-weight: 600;
-  color: #0b3d4d;
+  color: var(--DEF-Blue-Styling);
 }
 
-/* View toggle */
 .view-toggle {
   display: inline-flex;
-  background: #eef2f6;
+  background: var(--DEF-Background);
   border-radius: 999px;
   padding: 4px;
   margin-top: 10px;
@@ -56,25 +54,24 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  color: #666;
+  color: var(--DEF-Grey-Tekst);
   transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 .active {
-  background: #fff;
-  color: var(--color-header);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  background: var(--DEF-White);
+  color: var(--DEF-Blue-Styling);
+  box-shadow: var(--DEF-shadow-Small);
   transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 .home-layout {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* volledige schermhoogte */
+  height: 100vh;
   padding: 10px;
 }
 
-/* Map container */
 .page-home #map {
   flex: 1;
   border-radius: 12px;
@@ -83,21 +80,25 @@
 }
 
 #controls {
-  flex-shrink: 0; /* blijft zo hoog als nodig */
+  flex-shrink: 0;
+}
+
+#controls span h2 {
+  color: var(--DEF-Blue-Tekst);
 }
 
 #view {
-  flex: 1;               /* neemt alle resterende ruimte */
+  flex: 1;
   display: flex;
-  overflow: hidden;      /* voorkomt scrollbars */
+  overflow: hidden;
 }
 
-/* optioneel, maar sterk aanbevolen */
 #mapView {
   flex: 1;
   display: flex;
-  min-height: 320px; /* of wat jij fijn vindt */
+  min-height: 320px;
 }
+
 #tableView {
   display: none;
   width: 100%;
@@ -107,7 +108,7 @@
   flex: 1;
   width: 100%;
   height: 100%;
-  min-height: 320px; /* extra safety */
+  min-height: 320px;
   border-radius: 12px;
   overflow: hidden;
   position: relative;

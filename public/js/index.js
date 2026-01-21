@@ -592,9 +592,9 @@ function updateSelectedTekst(selectedTekstEl) {
 
 const menuBottomRight = createMenu("bottomright", `
   <div class="scale-control leaflet-control">
-    <button class="scaleWHO is-active" type="button" data-preset="WHO">WHO</button>
+    <button class="scaleWHO" type="button" data-preset="WHO">WHO</button>
     <button class="scaleEU" type="button" data-preset="EU">EU</button>
-    <button class="scaleData" type="button" data-preset="DATA" title="">Relative</button>
+    <button class="scaleRelative is-active" type="button" data-preset="DATA" title="">Relative</button>
   </div>
 `);
 
@@ -603,7 +603,7 @@ map.addControl(menuBottomRight);
 // Pak ALLE knoppen (staan 2x in DOM: map + table)
 const scaleWHOButtons  = document.querySelectorAll(".scaleWHO");
 const scaleEUButtons   = document.querySelectorAll(".scaleEU");
-const scaleDataButtons = document.querySelectorAll(".scaleData");
+const scaleRelativeButtons = document.querySelectorAll(".scaleRelative");
 
 // 1 waarheid: activeScale (gebruik je al)
 function setActiveScaleByPreset(presetKey) {
@@ -626,13 +626,13 @@ function syncScaleButtons() {
 
   scaleWHOButtons.forEach(btn => btn.classList.toggle("is-active", key === "WHO"));
   scaleEUButtons.forEach(btn => btn.classList.toggle("is-active", key === "EU"));
-  scaleDataButtons.forEach(btn => btn.classList.toggle("is-active", key === "DATA"));
+  scaleRelativeButtons.forEach(btn => btn.classList.toggle("is-active", key === "RELATIVE"));
 }
 
 // Click handlers voor ALLE instanties
 scaleWHOButtons.forEach(btn => btn.addEventListener("click", () => setActiveScaleByPreset("WHO")));
 scaleEUButtons.forEach(btn => btn.addEventListener("click", () => setActiveScaleByPreset("EU")));
-scaleDataButtons.forEach(btn => btn.addEventListener("click", () => setActiveScaleByPreset("DATA")));
+scaleRelativeButtons.forEach(btn => btn.addEventListener("click", () => setActiveScaleByPreset("DATA")));
 
 // Init: zorg dat de UI klopt op load
 syncScaleButtons();

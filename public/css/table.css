@@ -2,25 +2,27 @@
     position: fixed;
     bottom: 0px;
     right: 0px;
-    background: rgba(255, 255, 255, 1);
+    background: var(--DEF-White);
     padding: 6px 16px 30px 6px;
     border-radius: 8px 0 0 0;
-    box-shadow: var(--shadow-soft-top-left);
+    box-shadow: var(--DEF-shadow-soft-top-left);
     display: flex;
     gap: 6px;
 }
+
 .scale-control-table button {
-    border: 1px solid #ccc;
+    border: 1px solid var(--DEF-Border);
     border-radius: 4px;
     padding: 4px 8px;
     font-size: 11px;
     cursor: pointer;
-    background: #f8f9fa;
-    color: #333;
+    background: var(--DEF-Background);
+    color: var(--DEF-Grey-Tekst);
 }
+
 .scale-control-table button.is-active {
-    background: #007bff;
-    color: #fff;
+    background: var(--DEF-Blue-Styling);
+    color: var(--DEF-White);
 }
 
 #tableControl {
@@ -31,32 +33,36 @@
   grid-template-rows: repeat(2, 1fr);
   grid-column-gap: 20px;
   grid-row-gap: 10px;
-  color: #666;
+  color: var(--DEF-Grey-Tekst);
 }
+
 .tc1 { 
   grid-area: 1 / 1 / 2 / 2; 
 }
+
 .tc2 { 
   grid-area: 1 / 2 / 2 / 3; 
 }
+
 .tc3 { 
   grid-area: 2 / 1 / 3 / 3; 
 }
 
 #tableControl div {
   text-align: center;
-  background-color: #eef2f6;
-  border: solid 1px #a6a6a6;
+  background-color: var(--DEF-Background);
+  border: solid 1px var(--DEF-Border);
   padding: 10px;
   border-radius: 10px;
 }
+
 #tableControl input {
-  background-color: #eef2f6;
-  border: solid 1px #a6a6a6;
+  background-color: var(--DEF-Background);
+  border: solid 1px var(--DEF-Border);
   padding: 10px;
   border-radius: 10px;
 }
-/* --- Controls (2 selects + search) --- */
+
 .tableControl{
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -68,8 +74,9 @@
   width: 100%;
   padding: 10px;
   border-radius: 10px;
-  border: 1px solid #a6a6a6;
-  background: #eef2f6;
+  border: 1px solid var(--DEF-Border);
+  background: var(--DEF-Background);
+  color: var(--DEF-Grey-Tekst);
 }
 
 .tcSearch{
@@ -77,25 +84,23 @@
   width: 100%;
   padding: 10px;
   border-radius: 10px;
-  border: 1px solid #a6a6a6;
-  background: #eef2f6;
+  border: 1px solid var(border);
+  background: var(--DEF-Background);
 }
 
-/* --- List spacing --- */
 .tableList{
   display: grid;
   gap: 10px;
-  padding-bottom: 70px; /* ruimte voor scale knoppen */
-  color: #333;
+  padding-bottom: 70px;
+  color: var(--DEF-Grey-Tekst);
 }
 
-/* --- Card like screenshot --- */
 .table-card{
-  border: 1px solid #dbe5ef;
-  background: #fff;
+  border: 1px solid var(--DEF-Border);
+  background: var(--DEF-White);
   border-radius: 12px;
   padding: 12px;
-  background-color: #eef2f6;
+  background-color: var(--DEF-Background);
 }
 
 .table-card__title{
@@ -125,14 +130,13 @@
   margin-top: 6px;
   font-size: 12px;
   font-weight: 600;
-  color: #0f4c81;
+  color: var(--DEF-Blue-Tekst);
 }
 
-/* --- Accordion panel --- */
 .table-panel{
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid #e6eef6;
+  border-top: 1px solid var(--DEF-Border);
 }
 
 .measureList{
@@ -148,15 +152,15 @@
   justify-content: space-between;
   padding: 8px 10px;
   border-radius: 10px;
-  background: #f8fafc;
-  border: 1px solid rgba(0,0,0,0.06);
+  background: var(--DEF-Background);
+  border: 1px solid var(--DEF-Border);
   font-size: 12px;
 }
 
 .measureRow.is-selected{
-  outline: 2px solid rgba(15, 23, 42, 0.25);
+  outline: 2px solid var(--DEF-Border);
 }
-/* --- Table accordion: settings + mini chart --- */
+
 .table-panel__top{
   display:flex;
   justify-content:flex-end;
@@ -166,14 +170,14 @@
 }
 
 .table-settings-btn{
-  border: 1px solid #dbe5ef;
-  background: #fff;
+  border: 1px solid var(--DEF-Border);
+  background: var(--DEF-White);
   border-radius: 10px;
   padding: 6px 8px;
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--DEF-Box-Shadow);
 }
 
 .table-settings-popover{
@@ -181,11 +185,11 @@
   top: 38px;
   right: 0;
   width: min(260px, 100%);
-  background: #fff;
-  border: 1px solid #dbe5ef;
+  background: var(--DEF-White);
+  border: 1px solid var(--DEF-Border);
   border-radius: 12px;
   padding: 10px;
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.16);
+  box-shadow: var(--DEF-Box-Shadow);
   z-index: 5;
 }
 
@@ -195,7 +199,7 @@
   align-items:center;
   gap: 10px;
   font-size: 12px;
-  color: #0f172a;
+  color: var(--DEF-Black);
   margin: 6px 0;
 }
 
@@ -203,20 +207,19 @@
   width: 84px;
   padding: 8px 10px;
   border-radius: 10px;
-  border: 1px solid #dbe5ef;
-  background: #f8fafc;
+  border: 1px solid var(--DEF-Border);
+  background: var(--DEF-Background);
 }
 
 .table-pointChart{
   width: 100%;
   min-height: 150px;
-  background: #ffffff;
-  border: 1px solid #e6eef6;
+  background: var(--DEF-Background);
+  border: 1px solid var(--DEF-Border);
   border-radius: 12px;
   padding: 6px 6px 2px 6px;
 }
 
-/* ✅ voorkom "breder worden" bij openklappen */
 #tableList, .table-card, .table-panel, .measureList, .table-pointChart {
   max-width: 100%;
   box-sizing: border-box;
@@ -224,7 +227,7 @@
 
 .table-card {
   width: 100%;
-  overflow: hidden; /* vangt accidental overflow op */
+  overflow: hidden;
 }
 
 .table-panel {
@@ -237,7 +240,6 @@
   display: block;
 }
 
-/* lange tekst/waarden mogen niet de layout oprekken */
 .measureRow, .measureMonth, .measureVal {
   min-width: 0;
 }
