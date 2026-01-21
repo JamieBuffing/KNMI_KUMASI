@@ -915,10 +915,36 @@ function openPointOverlay(point, year, monthIndex) {
       <details class="popup__details">
         <summary>What does this mean?</summary>
         <div class="popup__detailsBody">
-          <div><strong>Scale:</strong> ${activeScale.key}</div>
-          <div><strong>Color max:</strong> ${max ? max.toFixed(2) : "—"} µg/m³</div>
-          <div><strong>Coordinates:</strong> lat ${point.coordinates?.lat ?? "—"}, lon ${point.coordinates?.lon ?? "—"}</div>
-          <div><strong>Tube:</strong> ${(point.measurements?.find(m => m?.tube_id)?.tube_id ?? "—")}</div>
+          <h2>Air quality level</h2>
+          <p>
+            This NO₂ level is high. <br>
+            It is higher than what is recommended for long-term health.
+          </p>
+          <h2>Health effects</h2>
+          <p>Long-term exposure to high NO₂ levels can:</p>
+          <ul style="margin-left: 16px;">
+            <li>
+              Irritate the lungs
+            </li>
+            <li>
+              Worsen asthma or breathing problems
+            </li>
+            <li>
+              Increase health risks for children and elderly people
+            </li>
+          </ul>
+          <h2>What you can do?</h2>
+          <ul style="margin-left: 16px;">
+            <li>
+              Limit time spent near busy roads and junctions
+            </li>
+            <li>
+              Reduce outdoor activities during heavy traffic hours
+            </li>
+            <li>
+              Children, elderly people and people with asthma should be extra careful
+            </li>
+          </ul>
         </div>
       </details>
 
