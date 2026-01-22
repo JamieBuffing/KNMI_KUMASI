@@ -1,6 +1,5 @@
 const dataRAW = document.getElementById("boot-data");
 const data = dataRAW ? JSON.parse(dataRAW.textContent) : { keuzes: {}, points: [] };
-console.log(data.points)
 const pointsNR = data.points.length;
 
 const values = data.points.flatMap(p =>
@@ -483,8 +482,6 @@ initEditPointModal();
 const searchInput = document.getElementById("searchPoints");
 const batchPoints = document.getElementById("batchpoints");
 
-console.log("searchInput:", searchInput);
-console.log("batchPoints:", batchPoints);
 
 if (!searchInput || !batchPoints) {
   console.warn("Search or batchpoints not found (script runs too early?)");
@@ -496,7 +493,6 @@ if (!searchInput || !batchPoints) {
 
   searchInput.addEventListener("input", () => {
     const query = searchInput.value.toLowerCase().trim();
-    console.log("typed:", query);
 
     let visibleCount = 0;
 
